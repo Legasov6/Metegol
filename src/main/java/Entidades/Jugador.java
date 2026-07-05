@@ -9,9 +9,9 @@ package Entidades;
  * @author legasov
  */
 public class Jugador {
-    public String nombreDT;
-    public int presupuesto;
-    public Equipo equipoAsignado;
+    private String nombreDT;
+    private int presupuesto;
+    private Equipo equipoAsignado;
 
     public Jugador(String nombreDT, int presupuesto, Equipo equipoAsignado) {
         this.nombreDT = nombreDT;

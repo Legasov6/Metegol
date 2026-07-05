@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" width="40" height="24" tilewidth="32" tileheight="32" infinite="0" nextlayerid="5" nextobjectid="16">
+ <tileset firstgid="1" name="Canchita" tilewidth="32" tileheight="32" tilecount="960" columns="40">
+  <image source="cancha.png" width="1280" height="768"/>
+ </tileset>
+ <layer id="4" name="Fondo" width="40" height="24">
+  <data encoding="base64" compression="zlib">
+   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
+  </data>
+ </layer>
+ <objectgroup id="3" name="Colisiones">
+  <object id="1" type="BANDA" x="94" y="72" width="1081" height="9"/>
+  <object id="2" type="BANDA" x="104" y="687.5" width="1071.5" height="7"/>
+  <object id="3" type="RED" x="1175.75" y="319.25" width="48" height="6.75"/>
+  <object id="4" type="RED" x="1215.75" y="326" width="7.75" height="116.75"/>
+  <object id="5" type="RED" x="1176" y="442" width="47.5" height="6.5"/>
+  <object id="6" type="GOL" x="1175.5" y="326" width="8.25" height="116.25"/>
+  <object id="8" type="FONDO" x="1176" y="73" width="8" height="246.5"/>
+  <object id="9" type="FONDO" x="1176" y="449" width="8" height="246"/>
+  <object id="10" type="FONDO" x="95.5" y="448.545" width="8.5" height="244.455"/>
+  <object id="11" type="FONDO" x="94.5" y="80" width="9.5" height="240"/>
+  <object id="12" type="RED" x="55.6364" y="319.636" width="48.5455" height="6.54545"/>
+  <object id="13" type="RED" x="55.2727" y="326.364" width="8.54545" height="122.545"/>
+  <object id="14" type="RED" x="63.6364" y="441.818" width="40.7273" height="6.72727"/>
+  <object id="15" type="GOL" x="96" y="326.545" width="7.63636" height="115.091"/>
+ </objectgroup>
+</map>
