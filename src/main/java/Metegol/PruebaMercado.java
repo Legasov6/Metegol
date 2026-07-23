@@ -4,9 +4,8 @@ import Entidades.MercadoFichajes;
 import Entidades.Jugador;
 import Entidades.Equipo;
 import Entidades.Futbolista;
+import java.util.List;
 import java.util.Scanner;
-
-
 
 public class PruebaMercado {
     
@@ -15,7 +14,6 @@ public class PruebaMercado {
         
         // 1. Inicializar y cargar el mercado global
         MercadoFichajes mercado = new MercadoFichajes();
-        // Asegúrate de que esta ruta coincida con la que definiste para tu CSV
         mercado.cargarMercadoDesdeCSV("recursos/Plantilla.csv"); 
 
         System.out.println("==================================================");
@@ -28,7 +26,6 @@ public class PruebaMercado {
         String nombreDT1 = scanner.nextLine();
         System.out.print("Ingrese el país que desea dirigir: ");
         String pais1 = scanner.nextLine();
-        // Asignamos 1000 monedas de presupuesto inicial
         Jugador dt1 = new Jugador(nombreDT1, 1000, new Equipo(pais1)); 
 
         System.out.println("\n--- REGISTRO DEL JUGADOR 2 ---");
@@ -77,8 +74,11 @@ public class PruebaMercado {
             switch (opcion) {
                 case "1":
                     System.out.println("\n--- JUGADORES EN EL MERCADO ---");
-                    for (Futbolista f : mercado.getBancoComun()) {
-                        System.out.println("- " + f.getNombre() + " (" + f.getClass().getSimpleName() + ") | Costo: " + f.getPrecio());
+                    List<Futbolista> disponibles = mercado.getBancoComun();
+                    for (int i = 0; i < disponibles.size(); i++) {
+                        Futbolista f = disponibles.get(i);
+                        // Imprime el índice entre corchetes antes del nombre
+                        System.out.println("[" + i + "] " + f.getNombre() + " (" + f.getClass().getSimpleName() + ") | Costo: " + f.getPrecio());
                     }
                     break;
 
@@ -87,14 +87,21 @@ public class PruebaMercado {
                         System.out.println("\n[!] Tu plantilla ya está llena (11/11). Devuelve a un jugador primero.");
                         break;
                     }
-                    System.out.print("\nEscribe el nombre exacto del jugador a fichar: ");
-                    String nombreFichaje = scanner.nextLine();
-                    Futbolista fichaje = buscarPorNombre(mercado.getBancoComun(), nombreFichaje);
                     
-                    if (fichaje != null) {
-                        dt.comprarFutbolista(fichaje, mercado);
-                    } else {
-                        System.out.println("[!] Jugador no encontrado en el mercado. Verifica que esté bien escrito.");
+                    System.out.print("\nIngresa el NÚMERO del jugador a fichar (Ej: 0, 1, 2...): ");
+                    try {
+                        int indiceFichaje = Integer.parseInt(scanner.nextLine());
+                        List<Futbolista> banco = mercado.getBancoComun();
+                        
+                        // Validar que el número ingresado exista en la lista actual
+                        if (indiceFichaje >= 0 && indiceFichaje < banco.size()) {
+                            Futbolista fichaje = banco.get(indiceFichaje);
+                            dt.comprarFutbolista(fichaje, mercado);
+                        } else {
+                            System.out.println("[!] Número fuera de rango. Revisa la lista del mercado (Opción 1).");
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("[!] Entrada inválida. Debes ingresar un número, no texto.");
                     }
                     break;
 
@@ -103,14 +110,25 @@ public class PruebaMercado {
                         System.out.println("\n[!] Tu plantilla está vacía. No tienes a quién devolver.");
                         break;
                     }
-                    System.out.print("\nEscribe el nombre exacto del jugador a devolver: ");
-                    String nombreDevolucion = scanner.nextLine();
-                    Futbolista devolucion = buscarPorNombre(dt.getEquipoAsignado().getTitulares(), nombreDevolucion);
                     
-                    if (devolucion != null) {
-                        dt.devolverFutbolista(devolucion, mercado);
-                    } else {
-                        System.out.println("[!] Ese jugador no está en tu plantilla.");
+                    System.out.println("\n--- TU PLANTILLA ACTUAL ---");
+                    List<Futbolista> misTitularesParaDevolver = dt.getEquipoAsignado().getTitulares();
+                    for (int i = 0; i < misTitularesParaDevolver.size(); i++) {
+                        System.out.println("[" + i + "] " + misTitularesParaDevolver.get(i).getNombre());
+                    }
+                    
+                    System.out.print("\nIngresa el NÚMERO del jugador a devolver: ");
+                    try {
+                        int indiceDevolucion = Integer.parseInt(scanner.nextLine());
+                        
+                        if (indiceDevolucion >= 0 && indiceDevolucion < misTitularesParaDevolver.size()) {
+                            Futbolista devolucion = misTitularesParaDevolver.get(indiceDevolucion);
+                            dt.devolverFutbolista(devolucion, mercado);
+                        } else {
+                            System.out.println("[!] Número fuera de rango. Revisa tu plantilla.");
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("[!] Entrada inválida. Debes ingresar un número.");
                     }
                     break;
 
@@ -119,10 +137,12 @@ public class PruebaMercado {
                     if (cantidadJugadores == 0) {
                         System.out.println("No tienes jugadores todavía.");
                     } else {
-                        for (Futbolista f : dt.getEquipoAsignado().getTitulares()) {
-                            System.out.println("- " + f.getNombre() + " (" + f.getClass().getSimpleName() + ")");
+                        List<Futbolista> misTitulares = dt.getEquipoAsignado().getTitulares();
+                        for (int i = 0; i < misTitulares.size(); i++) {
+                            System.out.println("[" + i + "] " + misTitulares.get(i).getNombre() + " (" + misTitulares.get(i).getClass().getSimpleName() + ")");
                         }
                     }
+                    //System.out.println("Estadística de Pase del Equipo: " + dt.getEquipoAsignado().calcularPaseTotal());
                     break;
 
                 case "5":
@@ -142,17 +162,5 @@ public class PruebaMercado {
                     System.out.println("\n[!] Opción no válida. Ingresa un número del 1 al 5.");
             }
         }
-    }
-
-    /**
-     * Método auxiliar para buscar un futbolista por su nombre dentro de cualquier lista.
-     */
-    private static Futbolista buscarPorNombre(java.util.List<Futbolista> lista, String nombreBuscado) {
-        for (Futbolista f : lista) {
-            if (f.getNombre().equalsIgnoreCase(nombreBuscado)) {
-                return f;
-            }
-        }
-        return null;
     }
 }

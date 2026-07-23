@@ -3,12 +3,14 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package Entidades;
-
+import java.io.Serializable;
 /**
  *
  * @author legasov
  */
-public class Futbolista {
+public class Futbolista implements Serializable{
+    
+    private static final long serialVersionUID = 1L; //Identificador único para el envio de paquetes para el online
     private String nombre;
     private String pais;
     private int velocidad;
@@ -36,13 +38,31 @@ public class Futbolista {
         return pais;
     }
 
+    public int getVelocidad() {
+        return velocidad;
+    }
+
+    public int getDisparo() {
+        return disparo;
+    }
+
+    public int getPase() {
+        return pase;
+    }
+
+    public int getDefensa() {
+        return defensa;
+    }
+
     public int getPrecio() {
         return precio;
     }
-    
-    public int getVelocidad(){
-        return velocidad;
+
+    public int getEstadoDeForma() {
+        return estadoDeForma;
     }
+
+    
     
     
 }

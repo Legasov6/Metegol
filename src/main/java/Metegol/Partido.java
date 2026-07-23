@@ -23,7 +23,7 @@ public class Partido extends GameApplication {
     private Entity jugador;
     private Entity pelota;
 
-    // Simulamos las estadísticas de tu objeto Futbolista para esta prueba
+    // Simulamos las estadísticas de tu objeto Futbolista para esta prueba 
     private int atributoDisparo = 70; // 70/100. Cambia este valor para probar la dispersión
     private boolean tieneElBalon = true; // Bandera para saber si podemos disparar
 

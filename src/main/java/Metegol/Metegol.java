@@ -1,6 +1,7 @@
 package Metegol;
 
-
+// Importa el nuevo paquete del menú que creamos
+import MenuJuego.MenuPrincipal; 
 
 import Entidades.Equipo;
 import Entidades.Futbolista;
@@ -16,71 +17,57 @@ import javafx.scene.shape.Rectangle;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
-public class Metegol {//extends GameApplication {
+// 1. DESCOMENTAMOS LA HERENCIA. Esto es vital para que FXGL funcione.
+public class Metegol extends GameApplication { 
 
-    /*private Entity pelota;
+    private Entity pelota;
 
     @Override
     protected void initSettings(GameSettings settings) {
-        settings.setWidth(800);
-        settings.setHeight(600);
-        settings.setTitle("Champs 2026 - Prueba de Motor FXGL");
-        settings.setVersion("0.1");
+       settings.setWidth(1280);
+       settings.setHeight(720);
+       settings.setTitle("Metegol - Champs 2026");
+       // settings.setFullScreenAllowed(true); 
     }
 
     @Override
     protected void initGame() {
-        // 1. Crear el fondo (Césped)
+        // 2. Ajustamos el césped al nuevo tamaño de la ventana (1280x720)
+        // FXGL dibujará esto, pero quedará "oculto" detrás del panel del menú principal
         entityBuilder()
                 .at(0, 0)
-                .view(new Rectangle(800, 600, Color.web("#2e8b57"))) // Verde oscuro
+                .view(new Rectangle(1280, 720, Color.web("#2e8b57"))) 
                 .buildAndAttach();
 
-        // 2. Crear una entidad básica (La pelota) en el centro de la pantalla
         pelota = entityBuilder()
-                .at(400, 300)
+                .at(640, 360) // Centro de la pantalla HD
                 .view(new Circle(15, Color.WHITE))
                 .buildAndAttach();
     }
 
     @Override
     protected void initInput() {
-        // 3. Registrar el evento de clic izquierdo del ratón
         onBtnDown(MouseButton.PRIMARY, () -> {
-            // Mover la pelota a las coordenadas exactas del ratón
             pelota.setPosition(getInput().getMouseXWorld(), getInput().getMouseYWorld());
         });
     }
-*/
-    public static void main(String[] args) {
-        //launch(args);
-        System.out.println("Probando");
-        MercadoFichajes mercado = new MercadoFichajes();
-        // Asegúrate de que la ruta apunte correctamente a donde guardaste el archivo
-        mercado.cargarMercadoDesdeCSV("recursos/Plantilla.csv");
 
-        /* // Imprimir para verificar que funcionó el polimorfismo
-        for (Futbolista f : mercado.getBancoComun()) {
-            System.out.println(f.getNombre() + " juega para " + f.getPais() + " y cuesta " + f.getPrecio() + " monedas.");
-        }
-        */
-        System.out.println("-------------------------");
+    // 3. ¡EL PUENTE CON LA INTERFAZ!
+    // Este método se ejecuta al arrancar y pone tu menú por encima de todo
+    @Override
+    protected void initUI() {
+        getGameScene().clearUINodes();
+        // Llamamos a la clase MenuPrincipal que debe estar en el paquete MenuJuego
+        var menu = MenuPrincipal.crearInterfaz();
+        getGameScene().addUINode(menu);
+    }
+
+    public static void main(String[] args) {
+        // 4. LIMPIEZA DEL MAIN
+        // Toda la lógica de consola (System.out.println, comprarFutbolista, etc.) 
+        // debe quedarse en tu clase "PruebaMercado.java". 
+        // El main de la aplicación real solo debe hacer una cosa: arrancar el motor.
         
-        Equipo francia = new Equipo("Francia");
-        Jugador dtUsuario = new Jugador("Gabriel", 200, francia);
-        
-        Futbolista mbappe = mercado.getBancoComun().get(0); 
-        Futbolista kante = mercado.getBancoComun().get(10);
-        
-        System.out.println("Mercado de Fichajes");
-        
-        dtUsuario.comprarFutbolista(mbappe, mercado);
-        dtUsuario.comprarFutbolista(kante, mercado);
-        
-        
-       System.out.println("Plantilla actual de" + francia.getNombrePais() + ": ");
-       for (Futbolista f: francia.getTitulares()){
-           System.out.println("- " + f.getNombre());
-       }
+        launch(args); 
     }
 }

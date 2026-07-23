@@ -3,15 +3,16 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package Entidades;
-
+import java.io.Serializable;
 /**
  *
  * @author legasov
  */
-public class Jugador {
+public class Jugador implements Serializable{
     private String nombreDT;
     private int presupuesto;
     private Equipo equipoAsignado;
+    private static final long serialVersionUID = 1L;
 
     public Jugador(String nombreDT, int presupuesto, Equipo equipoAsignado) {
         this.nombreDT = nombreDT;
@@ -53,7 +54,7 @@ public class Jugador {
     public boolean devolverFutbolista(Futbolista jugadorDevuelto, MercadoFichajes mercado){
         //Verifica si el jugador esta en el equipo
         if(this.equipoAsignado.getTitulares().contains(jugadorDevuelto)){
-            this.equipoAsignado.getTitulares().remove(jugadorDevuelto); //Quita al jugador del equipo del DT
+            this.equipoAsignado.removerFutbolista(jugadorDevuelto); //Quita al jugador del equipo del DT
             this.presupuesto += jugadorDevuelto.getPrecio(); //Reembolsar dinero
             mercado.getBancoComun().add(jugadorDevuelto); //Devolver el jugador al banco común
             
