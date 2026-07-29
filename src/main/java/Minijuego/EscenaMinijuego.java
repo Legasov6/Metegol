@@ -491,6 +491,7 @@ public class EscenaMinijuego {
         hilosRedActivos = true;
 
         // 1. EL OÍDO (Hilo receptor de fondo para evitar congelamientos)
+        // 1. EL OÍDO (Hilo receptor de fondo para evitar congelamientos)
         new Thread(() -> {
             try {
                 java.io.ObjectInputStream in = gestor.isEsHost() ? gestor.getServidor().getIn() : gestor.getCliente().getIn();
@@ -499,12 +500,18 @@ public class EscenaMinijuego {
                     Object paquete = in.readObject(); // El hilo se pausa aquí hasta recibir datos
                     
                     if (gestor.isEsHost() && paquete instanceof Logica.ComandoRed) {
-                        // El Host guarda lo que el Cliente quiere hacer
                         comandoEnemigo = (Logica.ComandoRed) paquete;
                     } 
                     else if (!gestor.isEsHost() && paquete instanceof Logica.EstadoMinijuego) {
-                        // El Cliente recibe la realidad del Host y actualiza sus gráficos de forma segura
                         Logica.EstadoMinijuego estadoRecibido = (Logica.EstadoMinijuego) paquete;
+                        
+                        // PARCHE CRÍTICO DE SINCRONIZACIÓN:
+                        // Si el Host nos avisa que el juego terminó, matamos este bucle instantáneamente
+                        // para que libere la red ANTES de que intente leer otro paquete y se congele.
+                        if (estadoRecibido.minijuegoTerminado) {
+                            hilosRedActivos = false;
+                        }
+                        
                         javafx.application.Platform.runLater(() -> actualizarPantallaCliente(estadoRecibido));
                     }
                 }

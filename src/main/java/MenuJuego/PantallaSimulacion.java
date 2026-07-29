@@ -25,6 +25,11 @@ public class PantallaSimulacion {
 
     private static TimerAction timerPartido; 
 
+    // NUEVO: Memoria Caché exclusiva para el Cliente
+    public static String ultimoMarcadorCliente = "0 - 0";
+    public static String ultimoRelojCliente = "00'";
+    public static String ultimaNarracionCliente = "¡Los equipos están en la cancha! Esperando el pitazo inicial...";
+    
     public static StackPane crearInterfaz() {
         StackPane panelFondo = new StackPane();
         panelFondo.setPrefSize(FXGL.getAppWidth(), FXGL.getAppHeight());
@@ -47,12 +52,22 @@ public class PantallaSimulacion {
         String nombreE1 = GestorJuego.getInstance().getEquipoLocal().getNombrePais();
         String nombreE2 = GestorJuego.getInstance().getEquipoRival().getNombrePais();
 
-        // 1. COMPONENTES VISUALES
         // 1. COMPONENTES VISUALES Y LECTURA DE MEMORIA
-        MotorSimulacion motorInit = GestorJuego.getInstance().getMotorActivo();
-        String golesTexto = (motorInit != null) ? motorInit.getGolesEquipo1() + " - " + motorInit.getGolesEquipo2() : "0 - 0";
-        String relojTexto = (motorInit != null) ? motorInit.getMinuto() + "'" : "00'";
-        String narradorTexto = (motorInit != null && motorInit.getMinuto() > 0) ? "El partido se reanuda desde el medio campo..." : "¡Los equipos están en la cancha! Esperando el pitazo inicial...";
+        boolean esClienteOnline = !GestorJuego.getInstance().isEsHost() && GestorJuego.getInstance().getCliente() != null;
+        String golesTexto, relojTexto, narradorTexto;
+
+        if (esClienteOnline) {
+            // El Cliente saca los datos de la memoria caché visual
+            golesTexto = ultimoMarcadorCliente;
+            relojTexto = ultimoRelojCliente;
+            narradorTexto = ultimaNarracionCliente;
+        } else {
+            // El Host (o modo offline) lee directamente del Motor matemático
+            MotorSimulacion motorInit = GestorJuego.getInstance().getMotorActivo();
+            golesTexto = (motorInit != null) ? motorInit.getGolesEquipo1() + " - " + motorInit.getGolesEquipo2() : "0 - 0";
+            relojTexto = (motorInit != null) ? motorInit.getMinuto() + "'" : "00'";
+            narradorTexto = (motorInit != null && motorInit.getMinuto() > 0) ? "El partido se reanuda desde el medio campo..." : "¡Los equipos están en la cancha! Esperando el pitazo inicial...";
+        }
 
         Text txtEquipo1 = new Text(nombreE1);
         txtEquipo1.setFont(Font.font("Impact", 45));
@@ -111,37 +126,32 @@ public class PantallaSimulacion {
         // =========================================================
         // BIFURCACIÓN DE LÓGICA: ¿CLIENTE O HOST/OFFLINE?
         // =========================================================
-        boolean esClienteOnline = !GestorJuego.getInstance().isEsHost() && GestorJuego.getInstance().getCliente() != null;
+        // BORRAMOS la línea "boolean esClienteOnline = ..." que estaba aquí
 
         if (esClienteOnline) {
-            
            // EL CLIENTE SOLO ESCUCHA (Es un espectador del Host)
             new Thread(() -> {
                 try {
                     ObjectInputStream in = GestorJuego.getInstance().getCliente().getIn();
                     while (true) {
                         
-                        // 1. ESCUDO ANTI-BASURA: Leemos de forma genérica primero
+                        // 1. ESCUDO ANTI-BASURA: Leemos de forma genérica
                         Object paqueteRecibido = in.readObject();
                         
-                        // Si el paquete NO es un EstadoPartido (ej. quedó rezagado un EstadoMinijuego), lo ignoramos
+                        // Si nos llega un paquete del minijuego rezagado por el lag, lo tiramos a la basura
                         if (!(paqueteRecibido instanceof Entidades.EstadoPartido)) {
                             continue;
                         }
                         
-                        // Ahora es 100% seguro transformarlo
                         Entidades.EstadoPartido estado = (Entidades.EstadoPartido) paqueteRecibido;
                         
-                        // Platform.runLater obliga a los gráficos a actualizarse de forma segura
                         javafx.application.Platform.runLater(() -> {
-                            
                             if (estado.getNarracion().startsWith(">>>INICIAR_MINIJUEGO")) {
                                 txtNarrador.setText("¡ENTRANDO AL MINIJUEGO!");
                                 txtNarrador.setFill(Color.RED);
                                 
-                                // Si el Host ataca, para nosotros (el Cliente) ataca nuestro Rival.
                                 boolean hostAtaca = estado.getNarracion().contains("HOST");
-                                boolean clienteAtaca = !hostAtaca; // Invertimos el rol
+                                boolean clienteAtaca = !hostAtaca; 
                                 
                                 FXGL.getGameTimer().runOnceAfter(() -> {
                                     FXGL.getGameScene().clearUINodes();
@@ -149,14 +159,15 @@ public class PantallaSimulacion {
                                 }, Duration.seconds(2.0));
                                 
                             } else {
-                                // ==========================================================
-                                // LÓGICA NORMAL: El partido sigue en simulación
-                                // ==========================================================
+                                // LÓGICA NORMAL Y ACTUALIZACIÓN DE CACHÉ
                                 txtReloj.setText(estado.getMinuto() + "'");
-                                
-                                // Invertimos los goles porque el Motor del Host tiene al Cliente como "Equipo 2"
                                 txtMarcadorGoles.setText(estado.getGolesEquipo2() + " - " + estado.getGolesEquipo1());
                                 txtNarrador.setText(estado.getNarracion());
+                                
+                                // Guardamos en memoria por si el juego cambia a la pantalla de Minijuego y vuelve
+                                ultimoRelojCliente = txtReloj.getText();
+                                ultimoMarcadorCliente = txtMarcadorGoles.getText();
+                                ultimaNarracionCliente = txtNarrador.getText();
                                 
                                 if (estado.getNarracion().contains("GOOOL") || estado.getNarracion().contains("FINAL")) {
                                     txtNarrador.setFill(Color.YELLOW);
@@ -166,13 +177,11 @@ public class PantallaSimulacion {
                                 
                                 if (estado.isFinDePartido()) {
                                     btnVolver.setVisible(true);
-                                    
-                                    // Guardado de estadísticas para el Cliente
-                                    if (estado.getGolesEquipo2() > estado.getGolesEquipo1()) { // Si el Cliente ganó
+                                    if (estado.getGolesEquipo2() > estado.getGolesEquipo1()) { 
                                         String marcadorFinal = estado.getGolesEquipo2() + " - " + estado.getGolesEquipo1();
                                         String nombreDT = GestorJuego.getInstance().getDtLocal().getNombreDT();
                                         Logica.GestorEstadisticas.guardarCampeon(new Entidades.RegistroCampeon(nombreDT, nombreE1, marcadorFinal));
-                                    } else if (estado.getGolesEquipo1() > estado.getGolesEquipo2()) { // Si el Host ganó
+                                    } else if (estado.getGolesEquipo1() > estado.getGolesEquipo2()) { 
                                         String marcadorFinal = estado.getGolesEquipo1() + " - " + estado.getGolesEquipo2();
                                         String nombreGanador = GestorJuego.getInstance().getDtRival().getNombreDT();
                                         Logica.GestorEstadisticas.guardarCampeon(new Entidades.RegistroCampeon(nombreGanador, nombreE2, marcadorFinal));
@@ -182,10 +191,7 @@ public class PantallaSimulacion {
                         });
                         
                         if (estado.isFinDePartido()) break;
-                        
-                        // Rompemos el hilo si entramos al minijuego
                         if (estado.getNarracion().startsWith(">>>INICIAR_MINIJUEGO")) break;
-
                     }
                 } catch (Exception ex) {
                     System.err.println("Error escuchando al Host en Simulación: " + ex.getMessage());
