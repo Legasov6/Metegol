@@ -120,7 +120,17 @@ public class PantallaSimulacion {
                 try {
                     ObjectInputStream in = GestorJuego.getInstance().getCliente().getIn();
                     while (true) {
-                        Entidades.EstadoPartido estado = (Entidades.EstadoPartido) in.readObject();
+                        
+                        // 1. ESCUDO ANTI-BASURA: Leemos de forma genérica primero
+                        Object paqueteRecibido = in.readObject();
+                        
+                        // Si el paquete NO es un EstadoPartido (ej. quedó rezagado un EstadoMinijuego), lo ignoramos
+                        if (!(paqueteRecibido instanceof Entidades.EstadoPartido)) {
+                            continue;
+                        }
+                        
+                        // Ahora es 100% seguro transformarlo
+                        Entidades.EstadoPartido estado = (Entidades.EstadoPartido) paqueteRecibido;
                         
                         // Platform.runLater obliga a los gráficos a actualizarse de forma segura
                         javafx.application.Platform.runLater(() -> {
@@ -178,7 +188,7 @@ public class PantallaSimulacion {
 
                     }
                 } catch (Exception ex) {
-                    System.err.println("Error escuchando al Host: " + ex.getMessage());
+                    System.err.println("Error escuchando al Host en Simulación: " + ex.getMessage());
                 }
             }).start();
 
