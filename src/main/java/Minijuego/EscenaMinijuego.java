@@ -553,15 +553,18 @@ public class EscenaMinijuego {
     }
 
     private static void actualizarPantallaCliente(Logica.EstadoMinijuego estado) {
-        if (balon != null) {
-            balon.setX(estado.balonX);
-            balon.setY(estado.balonY);
+        if (balon != null && balon.hasComponent(PhysicsComponent.class)) {
+            // Obligamos al cuerpo de Box2D a moverse, no solo al dibujo
+            balon.getComponent(PhysicsComponent.class).overwritePosition(new Point2D(estado.balonX, estado.balonY));
         }
         
         java.util.List<Entity> todosLosJugadores = FXGL.getGameWorld().getEntitiesByType(TipoEntidad.JUGADOR_ATACANTE, TipoEntidad.JUGADOR_DEFENSOR);
         for (int i = 0; i < Math.min(todosLosJugadores.size(), estado.jugadoresX.length); i++) {
-            todosLosJugadores.get(i).setX(estado.jugadoresX[i]);
-            todosLosJugadores.get(i).setY(estado.jugadoresY[i]);
+            Entity j = todosLosJugadores.get(i);
+            
+            if (j.hasComponent(PhysicsComponent.class)) {
+                j.getComponent(PhysicsComponent.class).overwritePosition(new Point2D(estado.jugadoresX[i], estado.jugadoresY[i]));
+            }
         }
 
         // Si el Host dice que la jugada terminó, el Cliente obedece

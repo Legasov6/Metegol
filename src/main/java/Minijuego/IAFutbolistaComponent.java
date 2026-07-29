@@ -18,6 +18,13 @@ public class IAFutbolistaComponent extends Component {
 
     @Override
     public void onUpdate(double tpf) {
+        // ESCUDO MULTIJUGADOR: Si somos el Cliente, apagamos el cerebro local por completo.
+        Logica.GestorJuego gestor = Logica.GestorJuego.getInstance();
+        boolean esCliente = !gestor.isEsHost() && gestor.getCliente() != null;
+        if (esCliente) {
+            return;
+        }
+
         // ESCUDO IA: No controlar a los jugadores manejados por humanos (Ni al Host ni al Cliente)
         if (entity == EscenaMinijuego.getJugadorActivo() || entity == EscenaMinijuego.getJugadorEnemigoActivo()) {
             return;
@@ -41,9 +48,9 @@ public class IAFutbolistaComponent extends Component {
                 // 2. Filtrar cuál es la correcta según hacia dónde atacamos
                 for (Entity p : porterias) {
                     if (atacaHaciaArriba && p.getY() < porteriaObjetivo.getY()) {
-                        porteriaObjetivo = p; // Nos quedamos con la de más arriba (Y menor)
+                        porteriaObjetivo = p; 
                     } else if (!atacaHaciaArriba && p.getY() > porteriaObjetivo.getY()) {
-                        porteriaObjetivo = p; // Nos quedamos con la de más abajo (Y mayor)
+                        porteriaObjetivo = p; 
                     }
                 }
             }
@@ -52,7 +59,6 @@ public class IAFutbolistaComponent extends Component {
             if (porteriaObjetivo != null) {
                 metaOfensiva = porteriaObjetivo.getCenter();
             } else {
-                // Fallback de seguridad si no hay porterías
                 double yObjetivo = atacaHaciaArriba ? 50 : FXGL.getAppHeight() - 50;
                 metaOfensiva = new Point2D(FXGL.getAppWidth() / 2.0, yObjetivo);
             }
