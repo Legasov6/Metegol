@@ -553,6 +553,12 @@ public class EscenaMinijuego {
     }
 
     private static void actualizarPantallaCliente(Logica.EstadoMinijuego estado) {
+        // 1. APAGAR EL CEREBRO DE LA PELOTA LOCAL
+        // Si el cliente cree que tiene el balón, lo suelta para obedecer ciegamente las coordenadas del Host
+        if (magnetismo != null && magnetismo.isTieneElBalon()) {
+            magnetismo.setTieneElBalon(false);
+        }
+
         if (balon != null && balon.hasComponent(PhysicsComponent.class)) {
             // Obligamos al cuerpo de Box2D a moverse, no solo al dibujo
             balon.getComponent(PhysicsComponent.class).overwritePosition(new Point2D(estado.balonX, estado.balonY));
@@ -716,12 +722,27 @@ public class EscenaMinijuego {
     // RESOLUCIÓN DE LA PARTIDA
     // ==========================================
 
-    private static void terminarMinijuego(String mensaje) {
-        // 1. ESCUDO: Si el minijuego ya terminó en este fotograma, ignoramos cualquier otro choque
+   private static void terminarMinijuego(String mensaje) {
+        // 1. ESCUDO: Si el minijuego ya terminó en este fotograma, ignoramos
         if (minijuegoTerminado) {
             return; 
         }
         minijuegoTerminado = true; // Cerramos la compuerta inmediatamente
+
+        // ==========================================
+        // EL SALVAVIDAS DE RED: El Host envía el último mensaje antes de apagar
+        // ==========================================
+        Logica.GestorJuego gestor = Logica.GestorJuego.getInstance();
+        if (gestor.isEsHost() && gestor.getServidor() != null && hilosRedActivos) {
+            try {
+                Logica.EstadoMinijuego estadoFinal = empaquetarEstado();
+                estadoFinal.mensajeFinal = mensaje;
+                gestor.getServidor().getOut().writeObject(estadoFinal);
+                gestor.getServidor().getOut().reset();
+            } catch (Exception e) {
+                System.err.println("Error enviando paquete final: " + e.getMessage());
+            }
+        }
 
         // APAGADO DE RED: Detenemos la transmisión y rompemos el hilo receptor
         hilosRedActivos = false;
@@ -734,9 +755,13 @@ public class EscenaMinijuego {
         
         // 2. Detener jugadores
         FXGL.getGameWorld().getEntitiesByType(TipoEntidad.JUGADOR_ATACANTE, TipoEntidad.JUGADOR_DEFENSOR)
-            .forEach(jugador -> jugador.getComponent(PhysicsComponent.class).setLinearVelocity(0, 0));
+            .forEach(jugador -> {
+                if (jugador.hasComponent(PhysicsComponent.class)) {
+                    jugador.getComponent(PhysicsComponent.class).setLinearVelocity(0, 0);
+                }
+            });
 
-        // 3. Crear el texto (Asegúrate de que SIEMPRE se cree con "new" aquí adentro)
+        // 3. Crear el texto 
         javafx.scene.text.Text textoFin = new javafx.scene.text.Text(mensaje);
         textoFin.setFont(javafx.scene.text.Font.font("Impact", 50));
         textoFin.setFill(javafx.scene.paint.Color.WHITE);
@@ -747,17 +772,14 @@ public class EscenaMinijuego {
         textoFin.setTranslateY(FXGL.getAppHeight() / 2.0);
         textoFin.setEffect(new javafx.scene.effect.DropShadow(5, javafx.scene.paint.Color.BLACK));
 
-        // Como el escudo nos protege, esto se ejecutará ESTRICTAMENTE una vez
         FXGL.addUINode(textoFin);
 
         // 4. Retorno al motor
-        // 4. Retorno al motor
         FXGL.getGameTimer().runOnceAfter(() -> {
-            System.out.println(">>> 1. Temporizador de 2.5s terminado. Intentando volver..."); // RASTREO 1
-            
             boolean huboGol = mensaje.equals("¡GOLAZO!");
             Logica.MotorSimulacion motor = Logica.GestorJuego.getInstance().getMotorActivo();
             
+            // Solo el Host o modo offline le notifica al motor (El Cliente solo es espectador visual)
             if (motor != null && (Logica.GestorJuego.getInstance().isEsHost() || Logica.GestorJuego.getInstance().getCliente() == null)) {
                 if (huboGol) {
                     motor.registrarGol(motor.getEquipoAtacante());
@@ -768,7 +790,6 @@ public class EscenaMinijuego {
             FXGL.getGameScene().clearUINodes();
             FXGL.getGameWorld().getEntitiesCopy().forEach(Entity::removeFromWorld);
             
-            System.out.println(">>> 2. Nodos limpiados. Llamando a PantallaSimulacion..."); // RASTREO 2
             MenuJuego.PantallaSimulacion.reanudarDesdeMinijuego(); 
 
         }, javafx.util.Duration.seconds(2.5));
