@@ -67,6 +67,7 @@ public class Jugador implements Serializable{
         }
     }
     
+    
     public int getPresupuesto(){
         return presupuesto;
     }

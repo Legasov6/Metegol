@@ -41,8 +41,9 @@ public class Futbolista implements Serializable{
     public int getVelocidad() {
         return velocidad;
     }
+    
 
-    public int getDisparo() {
+    public int getTiro() {
         return disparo;
     }
 

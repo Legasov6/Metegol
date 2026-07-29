@@ -154,7 +154,7 @@ public class MenuPlantilla {
                                           f.getNombre(), 
                                           f.getClass().getSimpleName(),
                                           f.getVelocidad(),
-                                          f.getDisparo(),
+                                          f.getTiro(),
                                           f.getPase(),
                                           f.getDefensa(),
                                           f.getPrecio());

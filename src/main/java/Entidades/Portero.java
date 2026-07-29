@@ -16,7 +16,9 @@ public class Portero extends Futbolista{
         this.nivelAtajada = nivelAtajada;
     }
 
-  
+    public int getNivelAtajada() {
+        return nivelAtajada;
+    }
     }
 
  

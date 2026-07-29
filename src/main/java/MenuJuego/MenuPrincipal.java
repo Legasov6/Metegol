@@ -1,5 +1,6 @@
 package MenuJuego;
 
+import Minijuego.EscenaMinijuego;
 import com.almasb.fxgl.dsl.FXGL;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -89,6 +90,9 @@ public class MenuPrincipal {
         });
 
         Button btnComoJugar = new Button("Cómo Jugar");
+        btnComoJugar.setOnAction(e -> {
+            Minijuego.EscenaMinijuego.iniciarMinijuego(null); // <-- PASAMOS NULL AQUÍ
+        });
 
         // =========================================================
         // APLICAR TAMAÑOS, ESTILOS Y EVENTOS HOVER CON UN BUCLE

@@ -1,0 +1,774 @@
+package Minijuego;
+
+import Entidades.Futbolista;
+import Entidades.Defensor;
+import Entidades.Mediocampista;
+import Entidades.Portero;
+import Entidades.Delantero; // Asumiendo que la tienes con los mismos parámetros
+import com.almasb.fxgl.entity.EntityFactory;
+import com.almasb.fxgl.dsl.FXGL;
+import com.almasb.fxgl.entity.Entity;
+import com.almasb.fxgl.entity.SpawnData;
+import com.almasb.fxgl.physics.BoundingShape;
+import com.almasb.fxgl.physics.HitBox;
+import com.almasb.fxgl.physics.PhysicsComponent;
+import javafx.geometry.Point2D;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+
+public class EscenaMinijuego {
+
+// --- VARIABLES ORIGINALES ---
+    private static Entity jugadorActivo;
+    private static Entity balon;
+    private static MagnetismoBalonComponent magnetismo;
+    // NUEVO: Bandera para no duplicar controles
+    private static boolean controlesConfigurados = false;
+    // NUEVO: El anillo brillante para el jugador
+    private static javafx.scene.shape.Circle indicadorVisual;
+    // NUEVO: Escudo contra colisiones simultáneas
+    private static boolean minijuegoTerminado = false;
+    private static boolean fabricaRegistrada = false; // <-- NUEVA BANDERA
+    private static boolean colisionesConfiguradas = false; // <-- NUEVA BANDERA
+    
+    // El sistema dinámico de la velocidad dejará de usar esta constante estática,
+    // pero la mantenemos por ahora si prefieres no conectar el componente de velocidad aún.
+    private static final int VELOCIDAD_JUGADOR = 150; 
+
+    // --- NUEVAS VARIABLES PARA EL SISTEMA DE CAMBIO DE DEFENSOR ---
+    private static java.util.List<Entity> defensoresCampo = new java.util.ArrayList<>();
+    private static Entity porteroEntity;
+    private static int indiceDefensor = 0;
+    
+    // ==========================================
+    // VARIABLES DE RED MULTIJUGADOR
+    // ==========================================
+    private static Logica.ComandoRed comandoLocal = new Logica.ComandoRed();
+    private static Logica.ComandoRed comandoEnemigo = new Logica.ComandoRed();
+    private static boolean hilosRedActivos = false;
+    private static com.almasb.fxgl.time.TimerAction timerRed;
+    private static Entity jugadorEnemigoActivo;
+    private static javafx.scene.shape.Circle indicadorEnemigo;
+    
+    // Variables para evitar que el Cliente "spamee" cambios de jugador al dejar la tecla hundida
+    private static boolean previoCambioDef = false;
+    private static boolean previoCtrlPort = false;
+    private static boolean previoClick = false;
+    private static int indiceDefensorEnemigo = 0;
+
+    // Modificamos el método para recibir explícitamente quién ataca
+    public static void iniciarMinijuego(Boolean atacanteEsLocal) {
+        minijuegoTerminado = false; 
+        jugadorActivo = null; // <-- NUEVO: Limpiamos al jugador zombi del turno anterior
+        
+        // 1. LIMPIAR LA PANTALLA Y EL MUNDO FÍSICO
+        FXGL.getGameScene().clearUINodes();
+        FXGL.getGameWorld().getEntitiesCopy().forEach(Entity::removeFromWorld); 
+        FXGL.getPhysicsWorld().setGravity(0, 0);
+        indicadorVisual = new javafx.scene.shape.Circle(15, javafx.scene.paint.Color.TRANSPARENT);
+        indicadorVisual.setStroke(javafx.scene.paint.Color.YELLOW);
+        indicadorVisual.setStrokeWidth(3);
+        indicadorVisual.setEffect(new javafx.scene.effect.DropShadow(10, javafx.scene.paint.Color.YELLOW));
+        
+        // MAGIA ANTI-CRASH: Registramos la fábrica de entidades UNA SOLA VEZ
+        if (!fabricaRegistrada) {
+            FXGL.getGameWorld().addEntityFactory(new FabricaMinijuego());
+            fabricaRegistrada = true;
+        }
+
+        FXGL.setLevelFromMap("cancha.tmx");
+
+        // ==========================================
+        // 2. EXTRACCIÓN DE DATOS (A prueba de nulos)
+        // ==========================================
+        Entidades.Futbolista miAtacante1, miAtacante2, miPortero, def1, def2, def3;
+        boolean atacaHaciaArriba;
+
+        if (atacanteEsLocal != null) {
+            // --- MODO PARTIDO REAL (El Host nos dijo quién ataca) ---
+            Logica.GestorJuego gestor = Logica.GestorJuego.getInstance();
+            
+            // Si el atacante es el local, tomamos nuestro equipo local. Si no, tomamos al rival.
+            Entidades.Equipo eqAtacante = atacanteEsLocal ? gestor.getEquipoLocal() : gestor.getEquipoRival();
+            Entidades.Equipo eqDefensor = atacanteEsLocal ? gestor.getEquipoRival() : gestor.getEquipoLocal();
+            
+            java.util.List<Entidades.Futbolista> atacantes = SelectorMinijuego.seleccionarAtacantes(eqAtacante.getTitulares());
+            java.util.List<Entidades.Futbolista> defensores = SelectorMinijuego.seleccionarDefensores(eqDefensor.getTitulares());
+            
+            miAtacante1 = atacantes.size() > 0 ? atacantes.get(0) : new Entidades.Delantero("Ata 1", eqAtacante.getNombrePais(), 3,3,3,1,10);
+            miAtacante2 = atacantes.size() > 1 ? atacantes.get(1) : new Entidades.Delantero("Ata 2", eqAtacante.getNombrePais(), 3,3,3,1,10);
+            miPortero = defensores.size() > 0 ? defensores.get(0) : new Entidades.Portero("Port", eqDefensor.getNombrePais(), 1,1,1,1,3,10);
+            def1 = defensores.size() > 1 ? defensores.get(1) : new Entidades.Defensor("Def 1", eqDefensor.getNombrePais(), 2,1,1,3,10);
+            def2 = defensores.size() > 2 ? defensores.get(2) : new Entidades.Defensor("Def 2", eqDefensor.getNombrePais(), 2,1,1,3,10);
+            def3 = defensores.size() > 3 ? defensores.get(3) : new Entidades.Defensor("Def 3", eqDefensor.getNombrePais(), 2,1,1,3,10);
+
+            atacaHaciaArriba = atacanteEsLocal; // El jugador local siempre ataca hacia arriba
+        } else {
+            // --- MODO SANDBOX ("Cómo Jugar") ---
+            miAtacante1 = new Entidades.Delantero("Messi", "Argentina", 4, 5, 5, 1, 100);
+            miAtacante2 = new Entidades.Delantero("Di Maria", "Argentina", 4, 4, 4, 1, 90); 
+            def1 = new Entidades.Defensor("Ramos", "España", 3, 2, 3, 5, 80);
+            def2 = new Entidades.Defensor("Puyol", "España", 2, 1, 2, 5, 85);
+            def3 = new Entidades.Mediocampista("Kroos", "Alemania", 3, 4, 5, 3, 90);
+            miPortero = new Entidades.Portero("Lloris", "Francia", 2, 1, 2, 2, 5, 75);
+            atacaHaciaArriba = true;
+        }
+
+        defensoresCampo.clear();
+        porteroEntity = null;
+        indiceDefensor = 0;
+
+        // ==========================================
+        // 3. HACER SPAWN DINÁMICO (Basado en las porterías)
+        // ==========================================
+        double centroX = FXGL.getAppWidth() / 2.0;
+
+        // 3.1 Buscamos las arquerías en el mapa para saber el tamaño real de la cancha
+        java.util.List<Entity> porterias = FXGL.getGameWorld().getEntitiesByType(TipoEntidad.PORTERIA);
+        double porteriaTopY = 50; 
+        double porteriaBottomY = FXGL.getAppHeight() - 50;
+        
+        if (porterias.size() >= 2) {
+            double y1 = porterias.get(0).getY();
+            double y2 = porterias.get(1).getY();
+            porteriaTopY = Math.min(y1, y2);
+            porteriaBottomY = Math.max(y1, y2);
+        }
+
+        // 3.2 Posiciones relativas a la portería que está siendo atacada
+        double atacanteY, defensaY, porteroY;
+
+        if (atacaHaciaArriba) {
+            // El objetivo es la portería de ARRIBA (Nosotros atacamos)
+            porteroY = porteriaTopY + 40; 
+            defensaY = porteriaTopY + 180; 
+            atacanteY = porteriaTopY + 350; 
+        } else {
+            // El objetivo es la portería de ABAJO (La CPU nos ataca a nosotros)
+            porteroY = porteriaBottomY - 40; 
+            defensaY = porteriaBottomY - 180; 
+            atacanteY = porteriaBottomY - 350; 
+        }
+
+        balon = FXGL.spawn("balon", centroX, atacanteY);
+
+        // Atacantes (Lado a lado)
+        SpawnData dataAtacante1 = new SpawnData(centroX - 60, atacanteY);
+        dataAtacante1.put("datos", miAtacante1);
+        dataAtacante1.put("esAtacante", true);
+        dataAtacante1.put("atacaHaciaArriba", atacaHaciaArriba); 
+        Entity entidadAtacante1 = FXGL.spawn("futbolista", dataAtacante1);
+
+        SpawnData dataAtacante2 = new SpawnData(centroX + 60, atacanteY);
+        dataAtacante2.put("datos", miAtacante2);
+        dataAtacante2.put("esAtacante", true);
+        dataAtacante2.put("atacaHaciaArriba", atacaHaciaArriba);
+        FXGL.spawn("futbolista", dataAtacante2);
+
+        // Defensores (En línea horizontal: Izquierda, Centro, Derecha)
+        SpawnData d1 = new SpawnData(centroX - 150, defensaY);
+        d1.put("datos", def1);
+        d1.put("esAtacante", false);
+        d1.put("atacaHaciaArriba", !atacaHaciaArriba); 
+        defensoresCampo.add(FXGL.spawn("futbolista", d1));
+
+        SpawnData d2 = new SpawnData(centroX, defensaY);
+        d2.put("datos", def2);
+        d2.put("esAtacante", false);
+        d2.put("atacaHaciaArriba", !atacaHaciaArriba);
+        defensoresCampo.add(FXGL.spawn("futbolista", d2));
+
+        SpawnData d3 = new SpawnData(centroX + 150, defensaY);
+        d3.put("datos", def3);
+        d3.put("esAtacante", false);
+        d3.put("atacaHaciaArriba", !atacaHaciaArriba);
+        defensoresCampo.add(FXGL.spawn("futbolista", d3));
+
+        SpawnData dPort = new SpawnData(centroX, porteroY);
+        dPort.put("datos", miPortero);
+        dPort.put("esAtacante", false);
+        dPort.put("atacaHaciaArriba", !atacaHaciaArriba);
+        porteroEntity = FXGL.spawn("futbolista", dPort);
+
+        // ==========================================
+        // 4. INICIAR EL MAGNETISMO Y ASIGNAR CONTROL (Host y Cliente)
+        // ==========================================
+        // Configurar el anillo ROJO para el enemigo (Cliente)
+        indicadorEnemigo = new javafx.scene.shape.Circle(15, javafx.scene.paint.Color.TRANSPARENT);
+        indicadorEnemigo.setStroke(javafx.scene.paint.Color.RED);
+        indicadorEnemigo.setStrokeWidth(3);
+        indicadorEnemigo.setEffect(new javafx.scene.effect.DropShadow(10, javafx.scene.paint.Color.RED));
+
+        magnetismo = new MagnetismoBalonComponent(balon);
+        
+        if (atacanteEsLocal == null || atacanteEsLocal == true) {
+            setJugadorActivo(entidadAtacante1); // El Host (Amarillo) ataca
+            setJugadorEnemigoActivo(defensoresCampo.get(1)); // El Cliente/IA (Rojo) defiende
+            jugadorActivo.addComponent(magnetismo);
+            magnetismo.setTieneElBalon(true);
+        } else {
+            setJugadorActivo(defensoresCampo.get(1)); // El Host (Amarillo) defiende
+            setJugadorEnemigoActivo(entidadAtacante1); // El Cliente/IA (Rojo) ataca
+            jugadorEnemigoActivo.addComponent(magnetismo); 
+            magnetismo.setTieneElBalon(true);
+        }
+
+
+        // MAGIA ANTI-CRASH: Controles
+        javafx.application.Platform.runLater(() -> {
+            if (!controlesConfigurados) {
+                configurarControles();
+                controlesConfigurados = true;
+            }
+        });
+
+        // ==========================================
+        // MANEJO DE COLISIONES (A prueba de duplicados)
+        // ==========================================
+        if (!colisionesConfiguradas) {
+
+           // 1. Si el balón sale de los límites o choca contra el muro del portero
+            FXGL.getPhysicsWorld().addCollisionHandler(new com.almasb.fxgl.physics.CollisionHandler(TipoEntidad.BALON, TipoEntidad.LIMITE_CANCHA) {
+                @Override
+                protected void onCollisionBegin(Entity balonEntity, Entity limite) {
+                    
+                    // ESCUDO DE FÍSICAS: Deferimos la acción un frame para que el motor Box2D se desbloquee
+                    FXGL.getGameTimer().runOnceAfter(() -> {
+                        terminarMinijuego("¡OPORTUNIDAD PERDIDA!");
+                    }, javafx.util.Duration.millis(16));
+                    
+                }
+            });
+
+            // 2. Si el balón toca la portería (GOL)
+            FXGL.getPhysicsWorld().addCollisionHandler(new com.almasb.fxgl.physics.CollisionHandler(TipoEntidad.BALON, TipoEntidad.PORTERIA) {
+                @Override
+                protected void onCollisionBegin(Entity balonEntity, Entity porteria) {
+                    FXGL.getGameTimer().runOnceAfter(() -> {
+                        PhysicsComponent fisicasBalon = balonEntity.getComponent(PhysicsComponent.class);
+                        fisicasBalon.setLinearVelocity(0, 0);
+                        fisicasBalon.setAngularVelocity(0);
+                        fisicasBalon.setBodyType(com.almasb.fxgl.physics.box2d.dynamics.BodyType.STATIC);
+                        
+                        terminarMinijuego("¡GOLAZO!");
+                    }, javafx.util.Duration.millis(16));
+                }
+            });
+
+            // 3. Si el balón toca a un ATACANTE (Pase)
+            FXGL.getPhysicsWorld().addCollisionHandler(new com.almasb.fxgl.physics.CollisionHandler(TipoEntidad.BALON, TipoEntidad.JUGADOR_ATACANTE) {
+                @Override
+                protected void onCollisionBegin(Entity balonEntity, Entity atacante) {
+                    if (atacante.hasComponent(MagnetismoBalonComponent.class)) {
+                        return;
+                    }
+                    FXGL.getGameTimer().runOnceAfter(() -> {
+                        jugadorActivo.removeComponent(MagnetismoBalonComponent.class);
+                        setJugadorActivo(atacante);
+                        magnetismo = new MagnetismoBalonComponent(balonEntity);
+                        jugadorActivo.addComponent(magnetismo);
+                        magnetismo.setTieneElBalon(true);
+                    }, javafx.util.Duration.millis(16));
+                }
+            });
+
+            // 4. Si el balón toca a un DEFENSOR (Intercepción)
+            FXGL.getPhysicsWorld().addCollisionHandler(new com.almasb.fxgl.physics.CollisionHandler(TipoEntidad.BALON, TipoEntidad.JUGADOR_DEFENSOR) {
+                @Override
+                protected void onCollisionBegin(Entity balonEntity, Entity defensor) {
+                    FXGL.getGameTimer().runOnceAfter(() -> {
+                        balonEntity.getComponent(PhysicsComponent.class).setLinearVelocity(0, 0);
+                        terminarMinijuego("¡OPORTUNIDAD PERDIDA!");
+                    }, javafx.util.Duration.millis(16));
+                }
+            });
+
+            // Cerramos la compuerta para que jamás se vuelvan a registrar
+            colisionesConfiguradas = true; 
+        } // Fin del if (!colisionesConfiguradas)
+
+        // ARRANCAR MOTOR DE RED MULTIJUGADOR
+        iniciarRedMinijuego();
+    } // <-- Llave final de iniciarMinijuego
+
+
+   private static void configurarControles() {
+        Logica.GestorJuego gestor = Logica.GestorJuego.getInstance();
+        // Definimos si esta computadora es exclusivamente un Cliente Online
+        boolean esCliente = !gestor.isEsHost() && gestor.getCliente() != null;
+
+        // ==========================================
+        // MOVIMIENTO Y FRENADO DINÁMICO (WASD) - BIFURCADO
+        // ==========================================
+        
+        // Tecla W: Arriba
+        FXGL.getInput().addAction(new com.almasb.fxgl.input.UserAction("Arriba") {
+            @Override protected void onAction() { 
+                if (minijuegoTerminado) return;
+                
+                if (esCliente) {
+                    comandoLocal.arriba = true; // El Cliente solo anota su intención
+                } else {
+                    // El Host mueve las físicas
+                    if (jugadorActivo == null || !jugadorActivo.hasComponent(AtributosFutbolistaComponent.class)) return;
+                    double vel = jugadorActivo.getComponent(AtributosFutbolistaComponent.class).getVelocidadFXGL();
+                    jugadorActivo.getComponent(PhysicsComponent.class).setVelocityY(-vel); 
+                }
+            }
+            @Override protected void onActionEnd() { 
+                if (minijuegoTerminado) return;
+                
+                if (esCliente) {
+                    comandoLocal.arriba = false; // El Cliente apaga la señal
+                } else {
+                    if (jugadorActivo == null || !jugadorActivo.hasComponent(PhysicsComponent.class)) return;
+                    jugadorActivo.getComponent(PhysicsComponent.class).setVelocityY(0); 
+                }
+            }
+        }, javafx.scene.input.KeyCode.W);
+
+        // Tecla S: Abajo
+        FXGL.getInput().addAction(new com.almasb.fxgl.input.UserAction("Abajo") {
+            @Override protected void onAction() { 
+                if (minijuegoTerminado) return;
+                
+                if (esCliente) {
+                    comandoLocal.abajo = true;
+                } else {
+                    if (jugadorActivo == null || !jugadorActivo.hasComponent(AtributosFutbolistaComponent.class)) return;
+                    double vel = jugadorActivo.getComponent(AtributosFutbolistaComponent.class).getVelocidadFXGL();
+                    jugadorActivo.getComponent(PhysicsComponent.class).setVelocityY(vel); 
+                }
+            }
+            @Override protected void onActionEnd() { 
+                if (minijuegoTerminado) return;
+                
+                if (esCliente) {
+                    comandoLocal.abajo = false;
+                } else {
+                    if (jugadorActivo == null || !jugadorActivo.hasComponent(PhysicsComponent.class)) return;
+                    jugadorActivo.getComponent(PhysicsComponent.class).setVelocityY(0); 
+                }
+            }
+        }, javafx.scene.input.KeyCode.S);
+
+        // Tecla A: Izquierda
+        FXGL.getInput().addAction(new com.almasb.fxgl.input.UserAction("Izquierda") {
+            @Override protected void onAction() { 
+                if (minijuegoTerminado) return;
+                
+                if (esCliente) {
+                    comandoLocal.izquierda = true;
+                } else {
+                    if (jugadorActivo == null || !jugadorActivo.hasComponent(AtributosFutbolistaComponent.class)) return;
+                    double vel = jugadorActivo.getComponent(AtributosFutbolistaComponent.class).getVelocidadFXGL();
+                    jugadorActivo.getComponent(PhysicsComponent.class).setVelocityX(-vel); 
+                }
+            }
+            @Override protected void onActionEnd() { 
+                if (minijuegoTerminado) return;
+                
+                if (esCliente) {
+                    comandoLocal.izquierda = false;
+                } else {
+                    if (jugadorActivo == null || !jugadorActivo.hasComponent(PhysicsComponent.class)) return;
+                    jugadorActivo.getComponent(PhysicsComponent.class).setVelocityX(0); 
+                }
+            }
+        }, javafx.scene.input.KeyCode.A);
+
+        // Tecla D: Derecha
+        FXGL.getInput().addAction(new com.almasb.fxgl.input.UserAction("Derecha") {
+            @Override protected void onAction() { 
+                if (minijuegoTerminado) return;
+                
+                if (esCliente) {
+                    comandoLocal.derecha = true;
+                } else {
+                    if (jugadorActivo == null || !jugadorActivo.hasComponent(AtributosFutbolistaComponent.class)) return;
+                    double vel = jugadorActivo.getComponent(AtributosFutbolistaComponent.class).getVelocidadFXGL();
+                    jugadorActivo.getComponent(PhysicsComponent.class).setVelocityX(vel); 
+                }
+            }
+            @Override protected void onActionEnd() { 
+                if (minijuegoTerminado) return;
+                
+                if (esCliente) {
+                    comandoLocal.derecha = false;
+                } else {
+                    if (jugadorActivo == null || !jugadorActivo.hasComponent(PhysicsComponent.class)) return;
+                    jugadorActivo.getComponent(PhysicsComponent.class).setVelocityX(0); 
+                }
+            }
+        }, javafx.scene.input.KeyCode.D);
+
+        // ==========================================
+        // CAMBIO DE JUGADOR (Defensores)
+        // ==========================================
+        
+        // Tecla Q: Alternar entre los 3 defensores de campo
+        FXGL.getInput().addAction(new com.almasb.fxgl.input.UserAction("Alternar Defensor") {
+            @Override
+            protected void onActionBegin() {
+                if (minijuegoTerminado) return;
+                
+                if (esCliente) {
+                    comandoLocal.cambiarDefensor = true;
+                } else {
+                    if (defensoresCampo.isEmpty()) return;
+                    indiceDefensor = (indiceDefensor + 1) % defensoresCampo.size();
+                    setJugadorActivo(defensoresCampo.get(indiceDefensor));
+                }
+            }
+            @Override
+            protected void onActionEnd() {
+                if (esCliente) comandoLocal.cambiarDefensor = false;
+            }
+        }, javafx.scene.input.KeyCode.Q);
+
+        // Barra Espaciadora: Controlar al Portero
+        FXGL.getInput().addAction(new com.almasb.fxgl.input.UserAction("Controlar Portero") {
+            @Override
+            protected void onActionBegin() {
+                if (minijuegoTerminado) return;
+                
+                if (esCliente) {
+                    comandoLocal.controlarPortero = true;
+                } else {
+                    if (porteroEntity == null) return;
+                    setJugadorActivo(porteroEntity);
+                }
+            }
+            @Override
+            protected void onActionEnd() {
+                if (esCliente) comandoLocal.controlarPortero = false;
+            }
+        }, javafx.scene.input.KeyCode.SPACE);
+
+        // ==========================================
+        // PASAR Y DISPARAR (Ratón - Vía JavaFX Nativo)
+        // ==========================================
+       FXGL.getGameScene().getRoot().setOnMousePressed(evento -> {
+            if (minijuegoTerminado) return;
+
+            if (esCliente) {
+                if (evento.getButton() == javafx.scene.input.MouseButton.PRIMARY) {
+                    comandoLocal.clickIzquierdo = true;
+                    // VITAL: Enviamos la posición real del mundo físico, no la de la ventana
+                    comandoLocal.mouseX = FXGL.getInput().getMousePositionWorld().getX();
+                    comandoLocal.mouseY = FXGL.getInput().getMousePositionWorld().getY();
+                }
+            } else {
+                if (jugadorActivo == null) return;
+                if (evento.getButton() == javafx.scene.input.MouseButton.PRIMARY) {
+                    if (magnetismo != null && magnetismo.isTieneElBalon() && jugadorActivo.hasComponent(MagnetismoBalonComponent.class)) {
+                        realizarDisparo(jugadorActivo, FXGL.getInput().getMousePositionWorld());
+                    } else {
+                        desplegarMuroDefensivo(jugadorActivo);
+                    }
+                }
+            }
+        });
+
+        // Limpiamos la señal del click cuando el Cliente suelta el botón
+        FXGL.getGameScene().getRoot().setOnMouseReleased(evento -> {
+            if (esCliente && evento.getButton() == javafx.scene.input.MouseButton.PRIMARY) {
+                comandoLocal.clickIzquierdo = false;
+            }
+        });
+    }
+
+   // ==========================================
+    // MOTOR DE RED ASÍNCRONO
+    // ==========================================
+    private static void iniciarRedMinijuego() {
+        Logica.GestorJuego gestor = Logica.GestorJuego.getInstance();
+        boolean esOnline = (gestor.getServidor() != null || gestor.getCliente() != null);
+        if (!esOnline) return;
+
+        hilosRedActivos = true;
+
+        // 1. EL OÍDO (Hilo receptor de fondo para evitar congelamientos)
+        new Thread(() -> {
+            try {
+                java.io.ObjectInputStream in = gestor.isEsHost() ? gestor.getServidor().getIn() : gestor.getCliente().getIn();
+                
+                while (hilosRedActivos && !minijuegoTerminado) {
+                    Object paquete = in.readObject(); // El hilo se pausa aquí hasta recibir datos
+                    
+                    if (gestor.isEsHost() && paquete instanceof Logica.ComandoRed) {
+                        // El Host guarda lo que el Cliente quiere hacer
+                        comandoEnemigo = (Logica.ComandoRed) paquete;
+                    } 
+                    else if (!gestor.isEsHost() && paquete instanceof Logica.EstadoMinijuego) {
+                        // El Cliente recibe la realidad del Host y actualiza sus gráficos de forma segura
+                        Logica.EstadoMinijuego estadoRecibido = (Logica.EstadoMinijuego) paquete;
+                        javafx.application.Platform.runLater(() -> actualizarPantallaCliente(estadoRecibido));
+                    }
+                }
+            } catch (Exception e) {
+                if (hilosRedActivos) System.err.println("Desconexión en el minijuego: " + e.getMessage());
+            }
+        }).start();
+
+        // 2. LA BOCA (Bucle FXGL a 60 FPS)
+        timerRed = FXGL.getGameTimer().runAtInterval(() -> {
+            try {
+                java.io.ObjectOutputStream out = gestor.isEsHost() ? gestor.getServidor().getOut() : gestor.getCliente().getOut();
+                
+                if (gestor.isEsHost()) {
+                    // El Host impone la realidad
+                    procesarComandoEnemigo(); // <---- AQUÍ ES DONDE SE COLOCA
+                    Logica.EstadoMinijuego estadoActual = empaquetarEstado();
+                    out.writeObject(estadoActual);
+                } else {
+                    // El Cliente envía sus intenciones de teclado/ratón
+                    out.writeObject(comandoLocal);
+                }
+                out.reset(); // VITAL: Limpia la memoria caché del Socket
+            } catch (Exception e) {
+                System.err.println("Error enviando paquete a 60FPS: " + e.getMessage());
+            }
+        }, javafx.util.Duration.millis(16));
+    }
+
+    private static Logica.EstadoMinijuego empaquetarEstado() {
+        java.util.List<Entity> todosLosJugadores = FXGL.getGameWorld().getEntitiesByType(TipoEntidad.JUGADOR_ATACANTE, TipoEntidad.JUGADOR_DEFENSOR);
+        Logica.EstadoMinijuego estado = new Logica.EstadoMinijuego(todosLosJugadores.size());
+        
+        if (balon != null) {
+            estado.balonX = balon.getX();
+            estado.balonY = balon.getY();
+        }
+        
+        for (int i = 0; i < todosLosJugadores.size(); i++) {
+            estado.jugadoresX[i] = todosLosJugadores.get(i).getX();
+            estado.jugadoresY[i] = todosLosJugadores.get(i).getY();
+        }
+        
+        estado.minijuegoTerminado = minijuegoTerminado;
+        return estado;
+    }
+
+    private static void actualizarPantallaCliente(Logica.EstadoMinijuego estado) {
+        if (balon != null) {
+            balon.setX(estado.balonX);
+            balon.setY(estado.balonY);
+        }
+        
+        java.util.List<Entity> todosLosJugadores = FXGL.getGameWorld().getEntitiesByType(TipoEntidad.JUGADOR_ATACANTE, TipoEntidad.JUGADOR_DEFENSOR);
+        for (int i = 0; i < Math.min(todosLosJugadores.size(), estado.jugadoresX.length); i++) {
+            todosLosJugadores.get(i).setX(estado.jugadoresX[i]);
+            todosLosJugadores.get(i).setY(estado.jugadoresY[i]);
+        }
+
+        // Si el Host dice que la jugada terminó, el Cliente obedece
+        if (estado.minijuegoTerminado && !minijuegoTerminado) {
+            terminarMinijuego(estado.mensajeFinal != null ? estado.mensajeFinal : "¡OPORTUNIDAD PERDIDA!");
+        }
+    }
+ // ==========================================
+    // MÉTODOS DE HABILIDAD (Tiro y Atajada)
+    // ==========================================
+
+    // ==========================================
+    // MÉTODOS DE HABILIDAD (Adaptados para Multijugador)
+    // ==========================================
+
+    private static void realizarDisparo(Entity tirador, Point2D objetivo) {
+        double fuerza = tirador.getComponent(AtributosFutbolistaComponent.class).getFuerzaTiroFXGL();
+        magnetismo.setTieneElBalon(false);
+        Point2D direccion = objetivo.subtract(tirador.getCenter()).normalize();
+        balon.getComponent(PhysicsComponent.class).setLinearVelocity(direccion.multiply(fuerza));
+    }
+
+    private static void desplegarMuroDefensivo(Entity caster) {
+        if (!caster.hasComponent(AtributosFutbolistaComponent.class)) return;
+        Entidades.Futbolista datos = caster.getComponent(AtributosFutbolistaComponent.class).getDatos();
+        
+        if (datos instanceof Entidades.Portero) {
+            Entidades.Portero portero = (Entidades.Portero) datos;
+            double anchoMuro = portero.getNivelAtajada() * 30.0; 
+            PhysicsComponent fisicasMuro = new PhysicsComponent();
+            fisicasMuro.setBodyType(com.almasb.fxgl.physics.box2d.dynamics.BodyType.STATIC);
+            
+            Entity muro = FXGL.entityBuilder().type(TipoEntidad.LIMITE_CANCHA) 
+                    .at(caster.getX() - (anchoMuro / 2) + 15, caster.getY() - 30)
+                    .bbox(new HitBox(BoundingShape.box(anchoMuro, 15)))
+                    .view(new javafx.scene.shape.Rectangle(anchoMuro, 15, javafx.scene.paint.Color.YELLOW))
+                    .with(fisicasMuro).buildAndAttach();
+                    
+            FXGL.getGameTimer().runOnceAfter(() -> {
+                if (muro.isActive()) muro.removeFromWorld();
+            }, javafx.util.Duration.seconds(1));
+        }
+    }
+
+    // ==========================================
+    // INTÉRPRETE DEL CONTROL REMOTO (El Host lee al Cliente)
+    // ==========================================
+    private static void procesarComandoEnemigo() {
+        if (jugadorEnemigoActivo == null || !jugadorEnemigoActivo.hasComponent(PhysicsComponent.class)) return;
+
+        // 1. MOVIMIENTO WASD DEL CLIENTE
+        double vel = jugadorEnemigoActivo.getComponent(AtributosFutbolistaComponent.class).getVelocidadFXGL();
+        PhysicsComponent fisicas = jugadorEnemigoActivo.getComponent(PhysicsComponent.class);
+        double velX = 0; double velY = 0;
+        if (comandoEnemigo.arriba) velY -= vel;
+        if (comandoEnemigo.abajo) velY += vel;
+        if (comandoEnemigo.izquierda) velX -= vel;
+        if (comandoEnemigo.derecha) velX += vel;
+        fisicas.setLinearVelocity(velX, velY);
+
+        // 2. CAMBIO DE DEFENSOR
+        if (comandoEnemigo.cambiarDefensor && !previoCambioDef) {
+            if (!defensoresCampo.isEmpty() && defensoresCampo.contains(jugadorEnemigoActivo)) {
+                indiceDefensorEnemigo = (indiceDefensorEnemigo + 1) % defensoresCampo.size();
+                setJugadorEnemigoActivo(defensoresCampo.get(indiceDefensorEnemigo));
+            }
+        }
+        previoCambioDef = comandoEnemigo.cambiarDefensor;
+
+        // 3. SACAR AL PORTERO
+        if (comandoEnemigo.controlarPortero && !previoCtrlPort) {
+            if (porteroEntity != null && defensoresCampo.contains(jugadorEnemigoActivo)) { 
+                setJugadorEnemigoActivo(porteroEntity);
+            }
+        }
+        previoCtrlPort = comandoEnemigo.controlarPortero;
+
+        // 4. HABILIDADES (Click)
+        if (comandoEnemigo.clickIzquierdo && !previoClick) {
+            if (jugadorEnemigoActivo.hasComponent(MagnetismoBalonComponent.class)) {
+                // Dispara hacia la coordenada exacta donde el cliente hizo clic
+                realizarDisparo(jugadorEnemigoActivo, new Point2D(comandoEnemigo.mouseX, comandoEnemigo.mouseY));
+            } else {
+                desplegarMuroDefensivo(jugadorEnemigoActivo);
+            }
+        }
+        previoClick = comandoEnemigo.clickIzquierdo;
+    }
+    
+    // Método para que la IA sepa a quién NO debe controlar
+    public static Entity getJugadorActivo() {
+        return jugadorActivo;
+    }
+    
+    // ==========================================
+    // SISTEMA DE CONTROL VISUAL
+    // ==========================================
+   private static void setJugadorActivo(Entity nuevoJugador) {
+        // ESCUDO: Si este jugador YA es el activo, ignoramos la transferencia para no duplicar el anillo
+        if (jugadorActivo == nuevoJugador) {
+            return; 
+        }
+
+        if (jugadorActivo != null) {
+            jugadorActivo.getViewComponent().removeChild(indicadorVisual);
+            jugadorActivo.getComponent(com.almasb.fxgl.physics.PhysicsComponent.class).setLinearVelocity(0, 0);
+        }
+
+        jugadorActivo = nuevoJugador;
+
+        indicadorVisual.setTranslateX(-1); 
+        indicadorVisual.setTranslateY(-1); 
+        jugadorActivo.getViewComponent().addChild(indicadorVisual);
+        
+        // NUEVO: La cámara sigue siempre al jugador que estamos controlando
+        FXGL.getGameScene().getViewport().bindToEntity(jugadorActivo, FXGL.getAppWidth() / 2.0, FXGL.getAppHeight() / 2.0);
+    }
+    // ==========================================
+    // SISTEMA DE CONTROL VISUAL (ENEMIGO)
+    // ==========================================
+    public static Entity getJugadorEnemigoActivo() {
+        return jugadorEnemigoActivo;
+    }
+
+    private static void setJugadorEnemigoActivo(Entity nuevoEnemigo) {
+        // ESCUDO: Si este jugador YA es el activo enemigo, ignoramos
+        if (jugadorEnemigoActivo == nuevoEnemigo) {
+            return; 
+        }
+
+        // Le quitamos el anillo rojo al jugador anterior y lo frenamos
+        if (jugadorEnemigoActivo != null) {
+            jugadorEnemigoActivo.getViewComponent().removeChild(indicadorEnemigo);
+            if (jugadorEnemigoActivo.hasComponent(com.almasb.fxgl.physics.PhysicsComponent.class)) {
+                jugadorEnemigoActivo.getComponent(com.almasb.fxgl.physics.PhysicsComponent.class).setLinearVelocity(0, 0);
+            }
+        }
+
+        // Asignamos el nuevo y le ponemos el anillo rojo
+        jugadorEnemigoActivo = nuevoEnemigo;
+
+        indicadorEnemigo.setTranslateX(-1); 
+        indicadorEnemigo.setTranslateY(-1); 
+        jugadorEnemigoActivo.getViewComponent().addChild(indicadorEnemigo);
+        
+        // OJO: Al enemigo NO le anclamos la cámara. La cámara solo sigue al jugador local.
+    }
+    // ==========================================
+    // RESOLUCIÓN DE LA PARTIDA
+    // ==========================================
+
+    private static void terminarMinijuego(String mensaje) {
+        // 1. ESCUDO: Si el minijuego ya terminó en este fotograma, ignoramos cualquier otro choque
+        if (minijuegoTerminado) {
+            return; 
+        }
+        minijuegoTerminado = true; // Cerramos la compuerta inmediatamente
+
+        // APAGADO DE RED: Detenemos la transmisión y rompemos el hilo receptor
+        hilosRedActivos = false;
+        if (timerRed != null) {
+            timerRed.expire();
+        }
+
+        // 1.5 Liberamos la cámara
+        FXGL.getGameScene().getViewport().unbind();
+        
+        // 2. Detener jugadores
+        FXGL.getGameWorld().getEntitiesByType(TipoEntidad.JUGADOR_ATACANTE, TipoEntidad.JUGADOR_DEFENSOR)
+            .forEach(jugador -> jugador.getComponent(PhysicsComponent.class).setLinearVelocity(0, 0));
+
+        // 3. Crear el texto (Asegúrate de que SIEMPRE se cree con "new" aquí adentro)
+        javafx.scene.text.Text textoFin = new javafx.scene.text.Text(mensaje);
+        textoFin.setFont(javafx.scene.text.Font.font("Impact", 50));
+        textoFin.setFill(javafx.scene.paint.Color.WHITE);
+        textoFin.setStroke(javafx.scene.paint.Color.BLACK);
+        textoFin.setStrokeWidth(2);
+        
+        textoFin.setTranslateX(FXGL.getAppWidth() / 2.0 - 100); // Centrado aproximado
+        textoFin.setTranslateY(FXGL.getAppHeight() / 2.0);
+        textoFin.setEffect(new javafx.scene.effect.DropShadow(5, javafx.scene.paint.Color.BLACK));
+
+        // Como el escudo nos protege, esto se ejecutará ESTRICTAMENTE una vez
+        FXGL.addUINode(textoFin);
+
+        // 4. Retorno al motor
+        // 4. Retorno al motor
+        FXGL.getGameTimer().runOnceAfter(() -> {
+            System.out.println(">>> 1. Temporizador de 2.5s terminado. Intentando volver..."); // RASTREO 1
+            
+            boolean huboGol = mensaje.equals("¡GOLAZO!");
+            Logica.MotorSimulacion motor = Logica.GestorJuego.getInstance().getMotorActivo();
+            
+            if (motor != null && (Logica.GestorJuego.getInstance().isEsHost() || Logica.GestorJuego.getInstance().getCliente() == null)) {
+                if (huboGol) {
+                    motor.registrarGol(motor.getEquipoAtacante());
+                }
+                motor.finalizarMinijuego(2, huboGol);
+            }
+
+            FXGL.getGameScene().clearUINodes();
+            FXGL.getGameWorld().getEntitiesCopy().forEach(Entity::removeFromWorld);
+            
+            System.out.println(">>> 2. Nodos limpiados. Llamando a PantallaSimulacion..."); // RASTREO 2
+            MenuJuego.PantallaSimulacion.reanudarDesdeMinijuego(); 
+
+        }, javafx.util.Duration.seconds(2.5));
+    }
+}
+

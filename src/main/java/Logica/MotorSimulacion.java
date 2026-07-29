@@ -229,4 +229,7 @@ public class MotorSimulacion {
     public int getGolesEquipo1() { return golesEquipo1; }
     public int getGolesEquipo2() { return golesEquipo2; }
     public Equipo getEquipoAtacante() { return equipoAtacante; }
+    public Equipo getEquipoDefensor() { 
+        return equipoDefensor; 
+    }
 }
