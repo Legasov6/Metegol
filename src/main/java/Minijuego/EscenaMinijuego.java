@@ -57,6 +57,13 @@ public class EscenaMinijuego {
     private static boolean previoCtrlPort = false;
     private static boolean previoClick = false;
     private static int indiceDefensorEnemigo = 0;
+    // Para que el muro se muestre bien
+    private static Entity muroVisualCliente;
+    
+    // NUEVO: Variables exactas para el muro del Host (Más rápido y sin errores)
+    private static Entity muroFisicoHost;
+    private static double anchoMuroHost;
+    
     
     private static boolean isClienteOnline() {
         Logica.GestorJuego gestor = Logica.GestorJuego.getInstance();
@@ -616,6 +623,16 @@ public class EscenaMinijuego {
                 estado.balonY = balon.getY();
             }
         }
+        // --- NUEVO: RASTREO DEL MURO DEFENSIVO (OPTIMIZADO) ---
+        estado.muroActivo = false;
+        
+        // Si el Host tiene un muro físico registrado y sigue vivo en el mundo...
+        if (muroFisicoHost != null && muroFisicoHost.isActive()) {
+            estado.muroActivo = true;
+            estado.muroX = muroFisicoHost.getX();
+            estado.muroY = muroFisicoHost.getY();
+            estado.muroAncho = anchoMuroHost; 
+        }
         
         for (int i = 0; i < todosLosJugadores.size(); i++) {
             estado.jugadoresX[i] = todosLosJugadores.get(i).getX();
@@ -646,7 +663,26 @@ public class EscenaMinijuego {
                 j.getComponent(PhysicsComponent.class).overwritePosition(new Point2D(estado.jugadoresX[i], estado.jugadoresY[i]));
             }
         }
-
+        // ==========================================
+        // SINCRONIZACIÓN VISUAL DEL MURO DEFENSIVO
+        // ==========================================
+        if (estado.muroActivo) {
+            // Si el host dice que hay un muro, lo creamos si no existe
+            if (muroVisualCliente == null || !muroVisualCliente.isActive()) {
+                muroVisualCliente = FXGL.entityBuilder()
+                        .at(estado.muroX, estado.muroY)
+                        .view(new javafx.scene.shape.Rectangle(estado.muroAncho, 15, javafx.scene.paint.Color.YELLOW))
+                        .buildAndAttach();
+            } else {
+                // Si ya existe, nos aseguramos de que esté en la posición exacta
+                muroVisualCliente.setPosition(estado.muroX, estado.muroY);
+            }
+        } else {
+            // Si el host dice que no hay muro, lo borramos de la pantalla (porque ya expiró su tiempo de vida)
+            if (muroVisualCliente != null && muroVisualCliente.isActive()) {
+                muroVisualCliente.removeFromWorld();
+            }
+        }
         // Si el Host dice que la jugada terminó, el Cliente obedece
         if (estado.minijuegoTerminado && !minijuegoTerminado) {
             terminarMinijuego(estado.mensajeFinal != null ? estado.mensajeFinal : "¡OPORTUNIDAD PERDIDA!");
@@ -684,6 +720,10 @@ public class EscenaMinijuego {
                     .view(new javafx.scene.shape.Rectangle(anchoMuro, 15, javafx.scene.paint.Color.YELLOW))
                     .with(fisicasMuro).buildAndAttach();
                     
+            // GUARDAMOS LA REFERENCIA EXACTA DIRECTAMENTE
+            muroFisicoHost = muro;
+            anchoMuroHost = anchoMuro;
+                    
             FXGL.getGameTimer().runOnceAfter(() -> {
                 if (muro.isActive()) muro.removeFromWorld();
             }, javafx.util.Duration.seconds(1));
@@ -708,7 +748,8 @@ public class EscenaMinijuego {
 
         // 2. CAMBIO DE DEFENSOR
         if (comandoEnemigo.cambiarDefensor && !previoCambioDef) {
-            if (!defensoresCampo.isEmpty() && defensoresCampo.contains(jugadorEnemigoActivo)) {
+            // Quitamos la restricción de ".contains"
+            if (!defensoresCampo.isEmpty()) {
                 indiceDefensorEnemigo = (indiceDefensorEnemigo + 1) % defensoresCampo.size();
                 setJugadorEnemigoActivo(defensoresCampo.get(indiceDefensorEnemigo));
             }
@@ -717,7 +758,8 @@ public class EscenaMinijuego {
 
         // 3. SACAR AL PORTERO
         if (comandoEnemigo.controlarPortero && !previoCtrlPort) {
-            if (porteroEntity != null && defensoresCampo.contains(jugadorEnemigoActivo)) { 
+            // Quitamos la restricción de ".contains"
+            if (porteroEntity != null) { 
                 setJugadorEnemigoActivo(porteroEntity);
             }
         }

@@ -25,4 +25,10 @@ public class EstadoMinijuego implements Serializable {
         minijuegoTerminado = false;
         mensajeFinal = "";
     }
+    // Variables para el Muro Defensivo
+    public boolean muroActivo;
+    public double muroX;
+    public double muroY;
+    public double muroAncho;
+    
 }
