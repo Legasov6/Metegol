@@ -177,15 +177,10 @@ public class PantallaSimulacion {
                                 
                                 if (estado.isFinDePartido()) {
                                     btnVolver.setVisible(true);
-                                    if (estado.getGolesEquipo2() > estado.getGolesEquipo1()) { 
-                                        String marcadorFinal = estado.getGolesEquipo2() + " - " + estado.getGolesEquipo1();
-                                        String nombreDT = GestorJuego.getInstance().getDtLocal().getNombreDT();
-                                        Logica.GestorEstadisticas.guardarCampeon(new Entidades.RegistroCampeon(nombreDT, nombreE1, marcadorFinal));
-                                    } else if (estado.getGolesEquipo1() > estado.getGolesEquipo2()) { 
-                                        String marcadorFinal = estado.getGolesEquipo1() + " - " + estado.getGolesEquipo2();
-                                        String nombreGanador = GestorJuego.getInstance().getDtRival().getNombreDT();
-                                        Logica.GestorEstadisticas.guardarCampeon(new Entidades.RegistroCampeon(nombreGanador, nombreE2, marcadorFinal));
-                                    }
+                                    
+                                    // El Cliente NO guarda estadísticas en el archivo local.
+                                    // Dejamos que el Host sea el único administrador de la base de datos
+                                    // para evitar registros duplicados al jugar en localhost.
                                 }
                             }
                         });

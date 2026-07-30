@@ -57,7 +57,12 @@ public class EscenaMinijuego {
     private static boolean previoCtrlPort = false;
     private static boolean previoClick = false;
     private static int indiceDefensorEnemigo = 0;
-
+    
+    private static boolean isClienteOnline() {
+        Logica.GestorJuego gestor = Logica.GestorJuego.getInstance();
+        return !gestor.isEsHost() && gestor.getCliente() != null;
+    }
+    
     // Modificamos el método para recibir explícitamente quién ataca
     public static void iniciarMinijuego(Boolean atacanteEsLocal) {
         minijuegoTerminado = false; 
@@ -143,12 +148,12 @@ public class EscenaMinijuego {
         if (atacaHaciaArriba) {
             // El objetivo es la portería de ARRIBA (Nosotros atacamos)
             porteroY = porteriaTopY + 40; 
-            defensaY = porteriaTopY + 180; 
+            defensaY = porteriaTopY + 130; 
             atacanteY = porteriaTopY + 350; 
         } else {
             // El objetivo es la portería de ABAJO (La CPU nos ataca a nosotros)
             porteroY = porteriaBottomY - 40; 
-            defensaY = porteriaBottomY - 180; 
+            defensaY = porteriaBottomY - 130; 
             atacanteY = porteriaBottomY - 350; 
         }
 
@@ -195,7 +200,6 @@ public class EscenaMinijuego {
         // ==========================================
         // 4. INICIAR EL MAGNETISMO Y ASIGNAR CONTROL (Host y Cliente)
         // ==========================================
-        // Configurar el anillo ROJO para el enemigo (Cliente)
         indicadorEnemigo = new javafx.scene.shape.Circle(15, javafx.scene.paint.Color.TRANSPARENT);
         indicadorEnemigo.setStroke(javafx.scene.paint.Color.RED);
         indicadorEnemigo.setStrokeWidth(3);
@@ -205,14 +209,22 @@ public class EscenaMinijuego {
         
         if (atacanteEsLocal == null || atacanteEsLocal == true) {
             setJugadorActivo(entidadAtacante1); // El Host (Amarillo) ataca
-            setJugadorEnemigoActivo(defensoresCampo.get(1)); // El Cliente/IA (Rojo) defiende
-            jugadorActivo.addComponent(magnetismo);
-            magnetismo.setTieneElBalon(true);
+            setJugadorEnemigoActivo(defensoresCampo.get(1)); // El Cliente (Rojo) defiende
+            
+            // EL CLIENTE NUNCA TOCA EL MAGNETISMO LOCALMENTE
+            if (!isClienteOnline()) { 
+                jugadorActivo.addComponent(magnetismo);
+                magnetismo.setTieneElBalon(true);
+            }
         } else {
             setJugadorActivo(defensoresCampo.get(1)); // El Host (Amarillo) defiende
-            setJugadorEnemigoActivo(entidadAtacante1); // El Cliente/IA (Rojo) ataca
-            jugadorEnemigoActivo.addComponent(magnetismo); 
-            magnetismo.setTieneElBalon(true);
+            setJugadorEnemigoActivo(entidadAtacante1); // El Cliente (Rojo) ataca
+            
+            // EL CLIENTE NUNCA TOCA EL MAGNETISMO LOCALMENTE
+            if (!isClienteOnline()) { 
+                jugadorEnemigoActivo.addComponent(magnetismo); 
+                magnetismo.setTieneElBalon(true);
+            }
         }
 
 
@@ -225,27 +237,28 @@ public class EscenaMinijuego {
         });
 
         // ==========================================
-        // MANEJO DE COLISIONES (A prueba de duplicados)
+        // MANEJO DE COLISIONES (El Cliente es ciego a esto)
         // ==========================================
         if (!colisionesConfiguradas) {
 
-           // 1. Si el balón sale de los límites o choca contra el muro del portero
+           // 1. Limite de cancha
             FXGL.getPhysicsWorld().addCollisionHandler(new com.almasb.fxgl.physics.CollisionHandler(TipoEntidad.BALON, TipoEntidad.LIMITE_CANCHA) {
                 @Override
                 protected void onCollisionBegin(Entity balonEntity, Entity limite) {
+                    if (isClienteOnline()) return; // ESCUDO MULTIJUGADOR
                     
-                    // ESCUDO DE FÍSICAS: Deferimos la acción un frame para que el motor Box2D se desbloquee
                     FXGL.getGameTimer().runOnceAfter(() -> {
                         terminarMinijuego("¡OPORTUNIDAD PERDIDA!");
                     }, javafx.util.Duration.millis(16));
-                    
                 }
             });
 
-            // 2. Si el balón toca la portería (GOL)
+            // 2. Portería (GOL)
             FXGL.getPhysicsWorld().addCollisionHandler(new com.almasb.fxgl.physics.CollisionHandler(TipoEntidad.BALON, TipoEntidad.PORTERIA) {
                 @Override
                 protected void onCollisionBegin(Entity balonEntity, Entity porteria) {
+                    if (isClienteOnline()) return; // ESCUDO MULTIJUGADOR
+                    
                     FXGL.getGameTimer().runOnceAfter(() -> {
                         PhysicsComponent fisicasBalon = balonEntity.getComponent(PhysicsComponent.class);
                         fisicasBalon.setLinearVelocity(0, 0);
@@ -257,41 +270,75 @@ public class EscenaMinijuego {
                 }
             });
 
-            // 3. Si el balón toca a un ATACANTE (Pase)
+            // 3. ATACANTE (Pase - Solución al "Robo de Jugador")
             FXGL.getPhysicsWorld().addCollisionHandler(new com.almasb.fxgl.physics.CollisionHandler(TipoEntidad.BALON, TipoEntidad.JUGADOR_ATACANTE) {
                 @Override
                 protected void onCollisionBegin(Entity balonEntity, Entity atacante) {
-                    if (atacante.hasComponent(MagnetismoBalonComponent.class)) {
-                        return;
-                    }
+                    if (isClienteOnline()) return; // ESCUDO MULTIJUGADOR
+                    
+                    if (atacante.hasComponent(MagnetismoBalonComponent.class)) return;
+                    
                     FXGL.getGameTimer().runOnceAfter(() -> {
-                        jugadorActivo.removeComponent(MagnetismoBalonComponent.class);
-                        setJugadorActivo(atacante);
-                        magnetismo = new MagnetismoBalonComponent(balonEntity);
-                        jugadorActivo.addComponent(magnetismo);
+                        // Verificamos de quién es el jugador que acaba de recibir el balón
+                        boolean hostEsAtacante = (jugadorActivo != null && jugadorActivo.getType() == TipoEntidad.JUGADOR_ATACANTE);
+                        
+                        if (hostEsAtacante) {
+                            jugadorActivo.removeComponent(MagnetismoBalonComponent.class);
+                            setJugadorActivo(atacante); // El Host se lo queda
+                            magnetismo = new MagnetismoBalonComponent(balonEntity);
+                            jugadorActivo.addComponent(magnetismo);
+                        } else {
+                            if (jugadorEnemigoActivo != null) jugadorEnemigoActivo.removeComponent(MagnetismoBalonComponent.class);
+                            setJugadorEnemigoActivo(atacante); // El Cliente se lo queda
+                            magnetismo = new MagnetismoBalonComponent(balonEntity);
+                            jugadorEnemigoActivo.addComponent(magnetismo);
+                        }
                         magnetismo.setTieneElBalon(true);
                     }, javafx.util.Duration.millis(16));
                 }
             });
 
-            // 4. Si el balón toca a un DEFENSOR (Intercepción)
+            // 4. DEFENSOR (Intercepción)
             FXGL.getPhysicsWorld().addCollisionHandler(new com.almasb.fxgl.physics.CollisionHandler(TipoEntidad.BALON, TipoEntidad.JUGADOR_DEFENSOR) {
                 @Override
                 protected void onCollisionBegin(Entity balonEntity, Entity defensor) {
+                    if (isClienteOnline()) return; // ESCUDO MULTIJUGADOR
+                    
                     FXGL.getGameTimer().runOnceAfter(() -> {
                         balonEntity.getComponent(PhysicsComponent.class).setLinearVelocity(0, 0);
                         terminarMinijuego("¡OPORTUNIDAD PERDIDA!");
                     }, javafx.util.Duration.millis(16));
                 }
             });
-
-            // Cerramos la compuerta para que jamás se vuelvan a registrar
+            
+            // ========================================================
+            // 5. NUEVO: DEFENSOR vs ATACANTE (Robo cuerpo a cuerpo)
+            // ========================================================
+            FXGL.getPhysicsWorld().addCollisionHandler(new com.almasb.fxgl.physics.CollisionHandler(TipoEntidad.JUGADOR_DEFENSOR, TipoEntidad.JUGADOR_ATACANTE) {
+                @Override
+                protected void onCollisionBegin(Entity defensor, Entity atacante) {
+                    if (isClienteOnline()) return; // ESCUDO MULTIJUGADOR
+                    
+                    // Si chocan, el Host le revisa los bolsillos al atacante
+                    if (atacante.hasComponent(MagnetismoBalonComponent.class)) {
+                        MagnetismoBalonComponent mag = atacante.getComponent(MagnetismoBalonComponent.class);
+                        
+                        // Si el atacante efectivamente tiene el balón, ¡BOOM! Robo y despeje.
+                        if (mag.isTieneElBalon()) {
+                            FXGL.getGameTimer().runOnceAfter(() -> {
+                                terminarMinijuego("¡ROBO Y DESPEJE!");
+                            }, javafx.util.Duration.millis(16));
+                        }
+                    }
+                }
+            });
+            
             colisionesConfiguradas = true; 
-        } // Fin del if (!colisionesConfiguradas)
+        }
 
         // ARRANCAR MOTOR DE RED MULTIJUGADOR
         iniciarRedMinijuego();
-    } // <-- Llave final de iniciarMinijuego
+    }
 
 
    private static void configurarControles() {
@@ -546,8 +593,28 @@ public class EscenaMinijuego {
         Logica.EstadoMinijuego estado = new Logica.EstadoMinijuego(todosLosJugadores.size());
         
         if (balon != null) {
-            estado.balonX = balon.getX();
-            estado.balonY = balon.getY();
+            boolean balonEnPosesion = false;
+            
+            // 1. Buscamos si algún jugador tiene secuestrado el balón con el magnetismo
+            for (Entity jugador : todosLosJugadores) {
+                if (jugador.hasComponent(MagnetismoBalonComponent.class)) {
+                    MagnetismoBalonComponent mag = jugador.getComponent(MagnetismoBalonComponent.class);
+                    if (mag.isTieneElBalon()) {
+                        // Empaquetamos la posición del dibujo falso en lugar de la coordenada -1000, -1000
+                        Point2D posReal = mag.getPosicionVisualBalon();
+                        estado.balonX = posReal.getX();
+                        estado.balonY = posReal.getY();
+                        balonEnPosesion = true;
+                        break;
+                    }
+                }
+            }
+            
+            // 2. Si nadie lo tiene (está volando por un pase o disparo), leemos la física normal
+            if (!balonEnPosesion) {
+                estado.balonX = balon.getX();
+                estado.balonY = balon.getY();
+            }
         }
         
         for (int i = 0; i < todosLosJugadores.size(); i++) {
@@ -585,9 +652,6 @@ public class EscenaMinijuego {
             terminarMinijuego(estado.mensajeFinal != null ? estado.mensajeFinal : "¡OPORTUNIDAD PERDIDA!");
         }
     }
- // ==========================================
-    // MÉTODOS DE HABILIDAD (Tiro y Atajada)
-    // ==========================================
 
     // ==========================================
     // MÉTODOS DE HABILIDAD (Adaptados para Multijugador)
@@ -600,7 +664,7 @@ public class EscenaMinijuego {
         balon.getComponent(PhysicsComponent.class).setLinearVelocity(direccion.multiply(fuerza));
     }
 
-    private static void desplegarMuroDefensivo(Entity caster) {
+   private static void desplegarMuroDefensivo(Entity caster) {
         if (!caster.hasComponent(AtributosFutbolistaComponent.class)) return;
         Entidades.Futbolista datos = caster.getComponent(AtributosFutbolistaComponent.class).getDatos();
         
@@ -610,8 +674,12 @@ public class EscenaMinijuego {
             PhysicsComponent fisicasMuro = new PhysicsComponent();
             fisicasMuro.setBodyType(com.almasb.fxgl.physics.box2d.dynamics.BodyType.STATIC);
             
+            // CÁLCULO DE DIRECCIÓN: Verificamos en qué lado de la cancha está parado el portero
+            double mitadCancha = FXGL.getAppHeight() / 2.0;
+            double offsetY = (caster.getY() < mitadCancha) ? 35 : -30; // +35 si está arriba, -30 si está abajo
+            
             Entity muro = FXGL.entityBuilder().type(TipoEntidad.LIMITE_CANCHA) 
-                    .at(caster.getX() - (anchoMuro / 2) + 15, caster.getY() - 30)
+                    .at(caster.getX() - (anchoMuro / 2) + 15, caster.getY() + offsetY)
                     .bbox(new HitBox(BoundingShape.box(anchoMuro, 15)))
                     .view(new javafx.scene.shape.Rectangle(anchoMuro, 15, javafx.scene.paint.Color.YELLOW))
                     .with(fisicasMuro).buildAndAttach();

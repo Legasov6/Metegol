@@ -74,7 +74,19 @@ public class MagnetismoBalonComponent extends Component {
             balonFalso.setTranslateY(centroY - 10 + (direccionActual.getY() * distanciaSegura));
         }
     }
-
+    // ==========================================
+    // LECTURA DE COORDENADAS PARA LA RED
+    // ==========================================
+    public Point2D getPosicionVisualBalon() {
+        if (tieneElBalon && entity != null) {
+            // Calculamos la posición exacta del dibujo en el mundo
+            double xReal = entity.getX() + balonFalso.getTranslateX();
+            double yReal = entity.getY() + balonFalso.getTranslateY();
+            return new Point2D(xReal, yReal);
+        }
+        // Si no lo tiene nadie, devolvemos la posición de las físicas reales
+        return new Point2D(balonFisico.getX(), balonFisico.getY());
+    }
     // ==========================================
     // LIMPIEZA AUTOMÁTICA
     // ==========================================

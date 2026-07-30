@@ -91,28 +91,36 @@ public class MenuPrincipal {
 
         Button btnComoJugar = new Button("Cómo Jugar");
         btnComoJugar.setOnAction(e -> {
-            Minijuego.EscenaMinijuego.iniciarMinijuego(null); // <-- PASAMOS NULL AQUÍ
+            FXGL.getGameScene().clearUINodes();
+            FXGL.getGameScene().addUINode(MenuComoJugar.crearInterfaz()); 
         });
-
+        
+        // NUEVO BOTÓN: Acerca De
+        Button btnAcercaDe = new Button("Acerca de");
+        btnAcercaDe.setOnAction(e -> {
+            FXGL.getGameScene().clearUINodes();
+            FXGL.getGameScene().addUINode(MenuAcercaDe.crearInterfaz());
+        });
+        
         // =========================================================
         // APLICAR TAMAÑOS, ESTILOS Y EVENTOS HOVER CON UN BUCLE
         // =========================================================
-        Button[] botones = {btnCrearJuego, btnUnirse, btnEstadisticas, btnComoJugar};
+        // Añadimos btnAcercaDe a la lista de botones
+        Button[] botones = {btnCrearJuego, btnUnirse, btnEstadisticas, btnComoJugar, btnAcercaDe};
         for (Button btn : botones) {
             btn.setFont(Font.font("System", 18));
             btn.setPrefWidth(240);
             btn.setStyle(estiloNormal);
             
-            // Eventos de ratón para cambiar el color iluminándolo
             btn.setOnMouseEntered(e -> btn.setStyle(estiloHover));
-            // Evento para devolverlo a la normalidad al quitar el ratón
             btn.setOnMouseExited(e -> btn.setStyle(estiloNormal));
         }
 
         // 4. AGRUPADOR CENTRAL
-        VBox contenedorCentral = new VBox(30); 
+        VBox contenedorCentral = new VBox(20); // Reduje un poco el espaciado a 20 para que quepan todos cómodamente
         contenedorCentral.setAlignment(Pos.CENTER); 
-        contenedorCentral.getChildren().addAll(titulo, btnCrearJuego, btnUnirse, btnEstadisticas, btnComoJugar);
+        // Añadimos btnAcercaDe al VBox
+        contenedorCentral.getChildren().addAll(titulo, btnCrearJuego, btnUnirse, btnEstadisticas, btnComoJugar, btnAcercaDe);
 
         // 5. ENSAMBLAJE FINAL
         panelFondo.getChildren().add(contenedorCentral);
