@@ -1,3 +1,5 @@
+// @author Frank Farias
+
 package MenuJuego;
 
 import Entidades.Equipo;
@@ -53,16 +55,14 @@ public class MenuEquipos {
         HBox filaEquipos = new HBox(20, btnArgentina, btnAlemania, btnEspana, btnFrancia);
         filaEquipos.setAlignment(Pos.CENTER);
         
-        // =========================================================
-        // NUEVO: CAMPO DE TEXTO PARA EL NOMBRE DEL DT
-        // =========================================================
+        //El DT ingresa su nombre
         TextField inputNombre = new TextField();
         inputNombre.setPromptText("Ingresa tu nombre de DT...");
         inputNombre.setMaxWidth(300);
         inputNombre.setFont(Font.font("System", 18));
-        inputNombre.setStyle("-fx-alignment: center;"); // Centra el texto al escribir
+        inputNombre.setStyle("-fx-alignment: center;");
 
-        // BOTÓN CONFIRMAR
+        // Confirmar
         Button btnConfirmar = new Button("Confirmar Equipo");
         btnConfirmar.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold; -fx-cursor: hand;");
         btnConfirmar.setPrefSize(250, 60);
@@ -77,10 +77,10 @@ public class MenuEquipos {
                 subtitulo.setText("¡DEBES INGRESAR TU NOMBRE DE DT!");
                 subtitulo.setFill(Color.RED);
             } else {
-                // NACE EL EQUIPO EN MEMORIA
+                // Crea el equipo en memoria
                 Equipo nuevoEquipo = new Equipo(equipoSeleccionado);
                 
-                // NACE EL MÁNAGER USANDO EL TEXTO INGRESADO
+                // Crea el manager
                 Jugador dtActual = new Jugador(nombreDT, 1000, nuevoEquipo); 
 
                 FXGL.getGameScene().clearUINodes();

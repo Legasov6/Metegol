@@ -1,3 +1,5 @@
+// @author Frank Farias
+
 package MenuJuego;
 
 import Logica.GestorJuego;
@@ -25,7 +27,7 @@ public class PantallaSimulacion {
 
     private static TimerAction timerPartido; 
 
-    // NUEVO: Memoria Caché exclusiva para el Cliente
+    // Memoria caché exclusiva para el Cliente
     public static String ultimoMarcadorCliente = "0 - 0";
     public static String ultimoRelojCliente = "00'";
     public static String ultimaNarracionCliente = "¡Los equipos están en la cancha! Esperando el pitazo inicial...";
@@ -48,21 +50,21 @@ public class PantallaSimulacion {
         filtroOscuro.setMouseTransparent(true);
         panelFondo.getChildren().add(filtroOscuro);
 
-        // Nombres en el HUD
+        // Nombres en la interfaz
         String nombreE1 = GestorJuego.getInstance().getEquipoLocal().getNombrePais();
         String nombreE2 = GestorJuego.getInstance().getEquipoRival().getNombrePais();
 
-        // 1. COMPONENTES VISUALES Y LECTURA DE MEMORIA
+        // Componentes visuales y lectura de memoria
         boolean esClienteOnline = !GestorJuego.getInstance().isEsHost() && GestorJuego.getInstance().getCliente() != null;
         String golesTexto, relojTexto, narradorTexto;
 
         if (esClienteOnline) {
-            // El Cliente saca los datos de la memoria caché visual
+            // El cliente saca los datos de la memoria caché visual
             golesTexto = ultimoMarcadorCliente;
             relojTexto = ultimoRelojCliente;
             narradorTexto = ultimaNarracionCliente;
         } else {
-            // El Host (o modo offline) lee directamente del Motor matemático
+            // El Host lee directamente del motorSimulacion
             MotorSimulacion motorInit = GestorJuego.getInstance().getMotorActivo();
             golesTexto = (motorInit != null) ? motorInit.getGolesEquipo1() + " - " + motorInit.getGolesEquipo2() : "0 - 0";
             relojTexto = (motorInit != null) ? motorInit.getMinuto() + "'" : "00'";
@@ -73,7 +75,7 @@ public class PantallaSimulacion {
         txtEquipo1.setFont(Font.font("Impact", 45));
         txtEquipo1.setFill(Color.WHITE);
 
-        Text txtMarcadorGoles = new Text(golesTexto); // ACTUALIZADO
+        Text txtMarcadorGoles = new Text(golesTexto);
         txtMarcadorGoles.setFont(Font.font("Impact", 60));
         txtMarcadorGoles.setFill(Color.YELLOW);
 
@@ -84,11 +86,11 @@ public class PantallaSimulacion {
         HBox marcador = new HBox(30, txtEquipo1, txtMarcadorGoles, txtEquipo2);
         marcador.setAlignment(Pos.CENTER);
 
-        Text txtReloj = new Text(relojTexto); // ACTUALIZADO
+        Text txtReloj = new Text(relojTexto);
         txtReloj.setFont(Font.font("Impact", 36));
         txtReloj.setFill(Color.CYAN);
 
-        Text txtNarrador = new Text(narradorTexto); // ACTUALIZADO
+        Text txtNarrador = new Text(narradorTexto); 
         txtNarrador.setFont(Font.font("Consolas", 28));
         txtNarrador.setFill(Color.WHITE);
         txtNarrador.setTextAlignment(TextAlignment.CENTER);
@@ -102,7 +104,7 @@ public class PantallaSimulacion {
             FXGL.getGameScene().addUINode(MenuPrincipal.crearInterfaz()); 
         });
 
-        // OVERLAY
+        // El overlay (las cajitas encima del fondo)
         BorderPane overlay = new BorderPane();
         overlay.setPrefSize(FXGL.getAppWidth(), FXGL.getAppHeight());
         overlay.setPickOnBounds(false);
@@ -123,22 +125,18 @@ public class PantallaSimulacion {
 
         panelFondo.getChildren().add(overlay);
 
-        // =========================================================
-        // BIFURCACIÓN DE LÓGICA: ¿CLIENTE O HOST/OFFLINE?
-        // =========================================================
-        // BORRAMOS la línea "boolean esClienteOnline = ..." que estaba aquí
-
+        // Si cliente online
         if (esClienteOnline) {
-           // EL CLIENTE SOLO ESCUCHA (Es un espectador del Host)
+           // El cliente solo hace de listener
             new Thread(() -> {
                 try {
                     ObjectInputStream in = GestorJuego.getInstance().getCliente().getIn();
                     while (true) {
                         
-                        // 1. ESCUDO ANTI-BASURA: Leemos de forma genérica
+                        // Cliente solo lee
                         Object paqueteRecibido = in.readObject();
                         
-                        // Si nos llega un paquete del minijuego rezagado por el lag, lo tiramos a la basura
+                        // Si un paquete vino con retraso, a la basura
                         if (!(paqueteRecibido instanceof Entidades.EstadoPartido)) {
                             continue;
                         }
@@ -159,7 +157,7 @@ public class PantallaSimulacion {
                                 }, Duration.seconds(2.0));
                                 
                             } else {
-                                // LÓGICA NORMAL Y ACTUALIZACIÓN DE CACHÉ
+                                // Lógica normal
                                 txtReloj.setText(estado.getMinuto() + "'");
                                 txtMarcadorGoles.setText(estado.getGolesEquipo2() + " - " + estado.getGolesEquipo1());
                                 txtNarrador.setText(estado.getNarracion());
@@ -178,9 +176,6 @@ public class PantallaSimulacion {
                                 if (estado.isFinDePartido()) {
                                     btnVolver.setVisible(true);
                                     
-                                    // El Cliente NO guarda estadísticas en el archivo local.
-                                    // Dejamos que el Host sea el único administrador de la base de datos
-                                    // para evitar registros duplicados al jugar en localhost.
                                 }
                             }
                         });
@@ -195,7 +190,7 @@ public class PantallaSimulacion {
 
         } else {
             
-            // EL HOST O MODO OFFLINE (EL ÁRBITRO DEL JUEGO)
+            // El host es quien dicta lo que muestra la interfaz
             MotorSimulacion motor = GestorJuego.getInstance().getMotorActivo();
             
             timerPartido = FXGL.getGameTimer().runAtInterval(() -> {
@@ -207,7 +202,7 @@ public class PantallaSimulacion {
                     btnVolver.setVisible(true);
                     timerPartido.expire();
                     
-                    // Guardado de estadísticas para el Host
+                    // Guardado de estadísticas para el host
                     if (motor.getGolesEquipo1() > motor.getGolesEquipo2()) {
                         String marcadorFinal = motor.getGolesEquipo1() + " - " + motor.getGolesEquipo2();
                         String nombreRealDT = GestorJuego.getInstance().getDtLocal().getNombreDT(); 
@@ -216,7 +211,7 @@ public class PantallaSimulacion {
                     } else if (motor.getGolesEquipo2() > motor.getGolesEquipo1()) {
                         String marcadorFinal = motor.getGolesEquipo2() + " - " + motor.getGolesEquipo1();
                         
-                        // Extraemos el nombre del rival humano, o ponemos "CPU" si estamos offline
+                        // Conseguir el nombre del rival humano, o pone "CPU" si es offline
                         String nombreGanador = "CPU (Bot)"; 
                         if (GestorJuego.getInstance().getDtRival() != null) {
                             nombreGanador = GestorJuego.getInstance().getDtRival().getNombreDT();
@@ -229,7 +224,7 @@ public class PantallaSimulacion {
                     return;
                 }
 
-               // Intercepción del Minijuego (Host)
+               // El momento de pausa antes de activar el minijuego
                 if (motor.isEnMinijuego()) {
                     timerPartido.expire(); 
                     
@@ -237,7 +232,7 @@ public class PantallaSimulacion {
                     txtNarrador.setText("¡PREPÁRENSE PARA EL ATAQUE DE " + equipoPeligro.toUpperCase() + "!");
                     txtNarrador.setFill(Color.RED);
                     
-                    // ¿Quién ataca? Identificamos si es el equipo del Host
+                    // Quien ataca
                     boolean hostAtaca = (motor.getEquipoAtacante() == Logica.GestorJuego.getInstance().getEquipoLocal());
                     
                     // Enviamos la señal específica por red
@@ -269,7 +264,7 @@ public class PantallaSimulacion {
         return panelFondo;
     }
     
-    // Este método reconstruye el HUD tras el minijuego
+    // Volvemos a crear el HUD despues de cerrar el minijuego
     public static void reanudarDesdeMinijuego() {
         FXGL.getGameScene().addUINode(crearInterfaz());
     }
@@ -287,7 +282,7 @@ public class PantallaSimulacion {
                 );
                 ObjectOutputStream out = GestorJuego.getInstance().getServidor().getOut();
                 out.writeObject(estadoActual);
-                out.reset(); // VITAL: Resetea el caché del canal para enviar datos frescos
+                out.reset(); // Resetea el caché del canal para enviar datos frescos
             } catch (Exception ex) {
                 System.err.println("Error transmitiendo estado: " + ex.getMessage());
             }

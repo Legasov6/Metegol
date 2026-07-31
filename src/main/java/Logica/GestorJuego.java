@@ -1,3 +1,5 @@
+// @author Gabriel Tremaria
+
 package Logica;
 
 import Entidades.Defensor;
@@ -10,12 +12,11 @@ import java.io.ObjectOutputStream;
 
 public class GestorJuego {
 
-    // 1. LA INSTANCIA ÚNICA
+    // Con static aseguramos que haya una sola instancia
     private static GestorJuego instance;
 
-    // 2. ATRIBUTOS GLOBALES
     private Entidades.Jugador dtLocal; 
-    private Entidades.Jugador dtRival; // <-- NUEVO: Para guardar al manager enemigo
+    private Entidades.Jugador dtRival; 
     private Equipo equipoLocal;
     private Equipo equipoRival;
     private MotorSimulacion motorActivo;
@@ -34,9 +35,6 @@ public class GestorJuego {
         return instance;
     }
 
-    // ==========================================================
-    // GETTERS Y SETTERS
-    // ==========================================================
     public void setEquipoLocal(Equipo equipoLocal) { this.equipoLocal = equipoLocal; }
     public Equipo getEquipoLocal() { return equipoLocal; }
 
@@ -60,9 +58,9 @@ public class GestorJuego {
     public ClienteRed getCliente() { return cliente; }
     public void setCliente(ClienteRed cliente) { this.cliente = cliente; }
 
-    // ==========================================================
-    // LÓGICA DE PARTIDO LOCAL (Offline - Se mantiene intacta)
-    // ==========================================================
+
+    
+    // Lógica de partido local (CPU)
     public void iniciarPartidoContraBot() {
         if (this.equipoLocal == null) {
             System.out.println("Error: No puedes iniciar el partido, el equipo local está vacío.");
@@ -89,12 +87,8 @@ public class GestorJuego {
         System.out.println("[GestorJuego] Equipo rival generado con éxito.");
     }
 
-    // ==========================================================
-    // LÓGICA DE PARTIDO ONLINE (NUEVO)
-    // ==========================================================
+    // Lógica de partido online
     public void intercambiarPlantillasOnline(Runnable alTerminar) {
-        // Envolvemos esto en un Thread para que, si el otro jugador tarda
-        // en armar su plantilla, nuestro juego no se quede "congelado" esperando.
         new Thread(() -> {
             try {
                 ObjectOutputStream out;
@@ -110,23 +104,23 @@ public class GestorJuego {
                 }
 
                 System.out.println("[RED] Enviando plantilla local al rival...");
-                // 1. Enviamos nuestro objeto Jugador entero
+                // Enviamos el objeto Jugador (el DT) entero
                 out.writeObject(this.dtLocal);
                 out.flush();
                 
                 System.out.println("[RED] Esperando a que el rival envíe su plantilla...");
-                // 2. Nos pausamos aquí hasta recibir el del rival
+                // Esperamos para recibir el del contricante
                 Entidades.Jugador rivalRecibido = (Entidades.Jugador) in.readObject();
                 
-                // 3. Guardamos los datos recibidos
+                // Guardar datos
                 this.dtRival = rivalRecibido;
                 this.equipoRival = rivalRecibido.getEquipoAsignado();
                 System.out.println("[RED] ¡Plantilla rival recibida con éxito! DT Rival: " + this.dtRival.getNombreDT());
 
-                // 4. Instanciamos el motor real con ambos equipos humanos
+                // Crear el motor real con los datos recibidos
                 this.motorActivo = new MotorSimulacion(this.equipoLocal, this.equipoRival);
 
-                // 5. Disparamos el cambio de pantalla en JavaFX
+                // Cambio de pantalla
                 javafx.application.Platform.runLater(alTerminar);
 
             } catch (Exception e) {

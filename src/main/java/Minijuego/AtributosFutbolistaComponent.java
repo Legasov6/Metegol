@@ -1,3 +1,5 @@
+// @author Gabriel Tremaria
+
 package Minijuego;
 
 import Entidades.Futbolista;
@@ -14,13 +16,12 @@ public class AtributosFutbolistaComponent extends Component {
         return datosLogicos;
     }
     
-    // Método de conveniencia para la velocidad (escalada para FXGL)
     public double getVelocidadFXGL() {
-        return datosLogicos.getVelocidad() * 30.0; 
+        return datosLogicos.getVelocidad() * 30.0; // Lo escalamos para FXGL
     }
     
     // Método para la potencia de tiro
-    public double getFuerzaTiroFXGL() {
+    public double getFuerzaTiroFXGL() { //No se usó la potencia adaptable
         return datosLogicos.getTiro() * 150.0; 
     }
 }

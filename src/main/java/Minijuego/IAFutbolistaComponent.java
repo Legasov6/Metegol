@@ -1,3 +1,5 @@
+// @author Gabriel Tremaria
+
 package Minijuego;
 
 import com.almasb.fxgl.dsl.FXGL;
@@ -9,7 +11,7 @@ import javafx.geometry.Point2D;
 public class IAFutbolistaComponent extends Component {
 
     private boolean esAtacante;
-    private boolean atacaHaciaArriba; // NUEVA VARIABLE
+    private boolean atacaHaciaArriba; //Para determinar hacia dónde correrán los atacantes
 
     public IAFutbolistaComponent(boolean esAtacante, boolean atacaHaciaArriba) {
         this.esAtacante = esAtacante;
@@ -18,14 +20,14 @@ public class IAFutbolistaComponent extends Component {
 
     @Override
     public void onUpdate(double tpf) {
-        // ESCUDO MULTIJUGADOR: Si somos el Cliente, apagamos el cerebro local por completo.
+        // Si somos el Cliente, apagamos el gestor local para que el host sea quien lo maneje
         Logica.GestorJuego gestor = Logica.GestorJuego.getInstance();
         boolean esCliente = !gestor.isEsHost() && gestor.getCliente() != null;
         if (esCliente) {
             return;
         }
 
-        // ESCUDO IA: No controlar a los jugadores manejados por humanos (Ni al Host ni al Cliente)
+        // Para que la IA no controle a los jugadores manejados por humanos
         if (entity == EscenaMinijuego.getJugadorActivo() || entity == EscenaMinijuego.getJugadorEnemigoActivo()) {
             return;
         }
@@ -39,13 +41,13 @@ public class IAFutbolistaComponent extends Component {
             double velocidadIA = entity.getComponent(AtributosFutbolistaComponent.class).getVelocidadFXGL() * 0.6;
             Point2D miPosicion = entity.getCenter();
             
-            // 1. Obtener TODAS las porterías de la cancha
+            // Obtener las porterías de la cancha
             java.util.List<Entity> porterias = FXGL.getGameWorld().getEntitiesByType(TipoEntidad.PORTERIA);
             Entity porteriaObjetivo = null;
 
             if (!porterias.isEmpty()) {
                 porteriaObjetivo = porterias.get(0);
-                // 2. Filtrar cuál es la correcta según hacia dónde atacamos
+                // Filtrar cuál es la correcta según hacia dónde atacamos
                 for (Entity p : porterias) {
                     if (atacaHaciaArriba && p.getY() < porteriaObjetivo.getY()) {
                         porteriaObjetivo = p; 
@@ -63,7 +65,7 @@ public class IAFutbolistaComponent extends Component {
                 metaOfensiva = new Point2D(FXGL.getAppWidth() / 2.0, yObjetivo);
             }
 
-            // 3. Trazar la diagonal hacia la meta
+            // Trazar la diagonal hacia la meta
             if (miPosicion.distance(metaOfensiva) > 100) {
                 Point2D direccion = metaOfensiva.subtract(miPosicion).normalize();
                 fisicas.setLinearVelocity(direccion.multiply(velocidadIA));

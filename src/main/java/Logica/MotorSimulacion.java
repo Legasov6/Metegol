@@ -1,3 +1,5 @@
+// @author Gabriel Tremaria
+
 package Logica;
 
 import Entidades.Equipo;
@@ -11,7 +13,7 @@ public class MotorSimulacion {
         CONTRAATAQUE
     }
 
-    // ATRIBUTOS DEL MOTOR MATEMÁTICO
+    // Atributos del motor matemático
     private Equipo equipo1;
     private Equipo equipo2;
     private EstadoPartido estadoActual;
@@ -20,7 +22,7 @@ public class MotorSimulacion {
     private int minuto;
     private Random dadoVirtual;
 
-    // NUEVOS ATRIBUTOS: ÁRBITRO Y CONTROL
+    // Variables árbitro
     private int golesEquipo1;
     private int golesEquipo2;
     private boolean enMinijuego; // Actúa como el "freno de mano"
@@ -34,16 +36,15 @@ public class MotorSimulacion {
         this.equipoDefensor = null;
         this.dadoVirtual = new Random();
         
-        // Inicializamos el marcador y el estado de control
+        // Inicializamos el marcador y el estado de control 
         this.golesEquipo1 = 0;
         this.golesEquipo2 = 0;
         this.enMinijuego = false;
     }
 
-    // ========================================================================
-    // BUCLE PRINCIPAL (Ahora devuelve un String para el Narrador Visual)
-    // ========================================================================
+    // Bucle principal
     public String simularMinuto() {
+        //Cuando llega al minuto 90 acaba el partido
         if (minuto >= 90) {
             return "¡Pitazo final! Marcador: " + equipo1.getNombrePais() + " [" + golesEquipo1 + " - " + golesEquipo2 + "] " + equipo2.getNombrePais();
         }
@@ -73,39 +74,35 @@ public class MotorSimulacion {
         return narracion.toString();
     }
 
-    // ========================================================================
-    // PUENTES DE COMUNICACIÓN CON LA INTERFAZ FXGL
-    // ========================================================================
+    // Puente con FXGL
     
-    // Este método lo llamará FXGL cuando el balón cruce la línea de meta
+    // Este método lo llama FXGL cuando el balón cruza la línea de meta
     public void registrarGol(Equipo equipoAnotador) {
         if (equipoAnotador == equipo1) {
             golesEquipo1++;
         } else if (equipoAnotador == equipo2) {
             golesEquipo2++;
         }
-        // Se pueden dejar los println aquí como logs de consola para ti (el desarrollador)
         System.out.println("¡GOOOOOOOOOOL DE " + equipoAnotador.getNombrePais() + "!");
         System.out.println("Marcador actualizado: " + equipo1.getNombrePais() + " " + golesEquipo1 + " - " + golesEquipo2 + " " + equipo2.getNombrePais());
     }
 
-    // Este método lo llamará FXGL cuando el minijuego termine (ya sea por gol, atajada o balón fuera)
+    // El método que FXGL llama cuando termina el minijuego
     public void finalizarMinijuego(int minutosConsumidos, boolean huboGol) {
         System.out.println("-> Devolviendo el control al motor. El tiempo avanza " + minutosConsumidos + " minutos reales.");
         this.minuto += minutosConsumidos; 
-        this.enMinijuego = false; // Quitamos el freno de mano
-        
+        this.enMinijuego = false; 
         if (huboGol) {
             // Si metieron gol, sacan del medio. Todo se reinicia a Neutral.
             this.estadoActual = EstadoPartido.NEUTRAL;
             this.equipoAtacante = null;
             this.equipoDefensor = null;
         } else {
-            // LÓGICA DE CASTIGO SI FALLAN EL GOL
+            // Si el equipo atacante falla el gol, habrá contraataque
             System.out.println("-> La jugada no terminó en gol...");
             
             if (this.estadoActual == EstadoPartido.DOMINIO) {
-                // Si falló un ataque de Dominio, se viene la contra
+                // Si falló un check de Dominio, se viene la contra
                 System.out.println("-> ¡El equipo rival sale al Contraataque!");
                 this.estadoActual = EstadoPartido.CONTRAATAQUE;
                 Equipo temp = this.equipoAtacante;
@@ -113,7 +110,7 @@ public class MotorSimulacion {
                 this.equipoDefensor = temp;
                 
             } else if (this.estadoActual == EstadoPartido.CONTRAATAQUE) {
-                // Si falló en un contraataque, la jugada simplemente se diluye
+                // Si falló en un contraataque, el partido se calma y volvemos a neutral
                 System.out.println("-> La defensa logra despejar y reordenarse. Balón al centro.");
                 this.estadoActual = EstadoPartido.NEUTRAL;
                 this.equipoAtacante = null;
@@ -122,9 +119,8 @@ public class MotorSimulacion {
         }
     }
 
-    // ========================================================================
-    // RESOLUCIÓN DE ESTADOS MATEMÁTICOS (Devolviendo textos)
-    // ========================================================================
+
+    // Cálculos matemáticos
     private String resolverNeutral() {
         StringBuilder sb = new StringBuilder();
         sb.append("Balón dividido en el mediocampo entre ").append(equipo1.getNombrePais()).append(" y ").append(equipo2.getNombrePais()).append("...\n");
@@ -166,22 +162,22 @@ public class MotorSimulacion {
         int tirada = dadoVirtual.nextInt(pozoTotal) + 1;
 
         if (tirada <= poderAtacante) {
-            sb.append("-> ¡Pase filtrado con éxito! ").append(equipoAtacante.getNombrePais()).append(" rompe la línea.\n");
-            sb.append("-> [PAUSA DEL MOTOR] Abriendo interfaz de Minijuego...");
-            this.enMinijuego = true; // Aplicamos el freno de mano
+            sb.append("-> ¡Pase filtrado! ").append(equipoAtacante.getNombrePais()).append(" rompe la línea.\n");
+            sb.append("-> Abriendo interfaz de Minijuego...");
+            this.enMinijuego = true; 
             
         } else {
             sb.append("-> La defensa de ").append(equipoDefensor.getNombrePais()).append(" corta el pase.\n");
             int checkRobo = dadoVirtual.nextInt(100) + 1; 
             
             if (checkRobo <= 20) {
-                sb.append("-> ¡Robo quirúrgico! Peligro de contragolpe.");
+                sb.append("-> ¡Robo de balón! Peligro de contragolpe.");
                 this.estadoActual = EstadoPartido.CONTRAATAQUE;
                 Equipo temp = this.equipoAtacante;
                 this.equipoAtacante = this.equipoDefensor;
                 this.equipoDefensor = temp;
             } else {
-                sb.append("-> Balón reventado hacia el mediocampo.");
+                sb.append("-> Balón despejado hacia el mediocampo.");
                 this.estadoActual = EstadoPartido.NEUTRAL;
                 this.equipoAtacante = null;
                 this.equipoDefensor = null;
@@ -193,7 +189,7 @@ public class MotorSimulacion {
 
     private String resolverContraataque() {
         StringBuilder sb = new StringBuilder();
-        sb.append("¡").append(equipoAtacante.getNombrePais()).append(" sale a toda velocidad al contragolpe!\n");
+        sb.append("¡").append(equipoAtacante.getNombrePais()).append(" sale a toda velocidad a la contra!\n");
         
         int poderAtacante = (equipoAtacante.getVelocidadDelanteros() + equipoAtacante.getPaseDelanteros()) + (equipoAtacante.getVelocidadMediocampistas() + equipoAtacante.getPaseMediocampistas()) + equipoAtacante.getPaseDefensores();
         int poderDefensorBruto = (equipoDefensor.getVelocidadMediocampistas() + equipoDefensor.getDefensaMediocampistas()) + (equipoDefensor.getVelocidadDefensores() + equipoDefensor.getDefensaDefensores() + equipoDefensor.getPaseDefensores());
@@ -209,11 +205,11 @@ public class MotorSimulacion {
 
         if (tirada <= poderAtacante) {
             sb.append("-> ¡La contra es letal! Llegan al área con superioridad numérica.\n");
-            sb.append("-> [PAUSA DEL MOTOR] Abriendo interfaz de Minijuego...");
+            sb.append("-> Abriendo interfaz de Minijuego...");
             this.enMinijuego = true; // Aplicamos el freno de mano
             
         } else {
-            sb.append("-> ¡Milagro defensivo! La defensa logra replegarse.");
+            sb.append("-> ¡Tremenda defensa! La defensa logra replegarse.");
             this.estadoActual = EstadoPartido.NEUTRAL;
             this.equipoAtacante = null;
             this.equipoDefensor = null;

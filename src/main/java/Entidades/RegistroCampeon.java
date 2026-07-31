@@ -1,3 +1,5 @@
+// @author Frank Farias
+
 package Entidades;
 
 import java.time.LocalDateTime;
@@ -14,22 +16,21 @@ public class RegistroCampeon {
         this.seleccion = seleccion;
         this.marcadorFinal = marcadorFinal;
         
-        // El sistema captura la fecha y hora exacta del sistema automáticamente
+        // Hora y fecha del sistema
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
         this.fechaHora = dtf.format(LocalDateTime.now());
     }
 
-    // Getters para que tu compañero pueda leer los datos al armar su tabla
     public String getNombreDT() { return nombreDT; }
     public String getSeleccion() { return seleccion; }
     public String getMarcadorFinal() { return marcadorFinal; }
     public String getFechaHora() { return fechaHora; }
     
-    // Formato CSV rápido por si tu compañero lo necesita
+    // Formato CSV
     public String toCSV() {
         return nombreDT + "," + seleccion + "," + marcadorFinal + "," + fechaHora;
     }
-    // Añade este método al final de tu clase RegistroCampeon
+    
     public void setFechaHora(String fechaHoraHistorica) {
         this.fechaHora = fechaHoraHistorica;
     }

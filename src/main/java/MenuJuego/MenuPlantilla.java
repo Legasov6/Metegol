@@ -1,3 +1,5 @@
+// @author Frank Farias
+
 package MenuJuego;
 
 import Entidades.Equipo;

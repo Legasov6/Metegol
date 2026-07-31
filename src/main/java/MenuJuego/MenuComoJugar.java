@@ -1,3 +1,5 @@
+// @author Frank Farias
+
 package MenuJuego;
 
 import com.almasb.fxgl.dsl.FXGL;
@@ -17,7 +19,7 @@ public class MenuComoJugar {
         StackPane panelFondo = new StackPane();
         panelFondo.setPrefSize(FXGL.getAppWidth(), FXGL.getAppHeight());
 
-        // 1. FONDO CON FILTRO OSCURO
+        // Fondo con filtro oscuro
         try {
             var fondoView = FXGL.texture("fondoMenu.png", FXGL.getAppWidth(), FXGL.getAppHeight());
             panelFondo.getChildren().add(fondoView);
@@ -29,12 +31,12 @@ public class MenuComoJugar {
         filtroOscuro.setFill(Color.rgb(0, 0, 0, 0.85)); // 85% de opacidad para que el texto resalte
         panelFondo.getChildren().add(filtroOscuro);
 
-        // 2. TÍTULO
+        // Titulo
         Text titulo = new Text("MANUAL DE JUEGO");
         titulo.setFont(Font.font("Impact", 60));
         titulo.setFill(Color.GOLD);
 
-        // 3. TEXTO DE INSTRUCCIONES
+        // Manual de juego
         Text instrucciones = new Text(
             "⚽ FASE DE GESTIÓN:\n" +
             "Arma tu equipo comprando jugadores en base a sus atributos y cuidando tu presupuesto. " +
@@ -54,7 +56,7 @@ public class MenuComoJugar {
         instrucciones.setWrappingWidth(FXGL.getAppWidth() - 150); // Evita que el texto se salga de la pantalla
         instrucciones.setLineSpacing(5);
 
-        // 4. BOTÓN ÚNICO (Volver)
+        // Botón Volver
         Button btnVolver = new Button("Volver al Menú");
         btnVolver.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold; -fx-cursor: hand;");
         btnVolver.setPrefSize(250, 50);
@@ -63,7 +65,7 @@ public class MenuComoJugar {
             FXGL.getGameScene().addUINode(MenuPrincipal.crearInterfaz());
         });
 
-        // 5. ENSAMBLAJE
+        // Montaje
         VBox contenedorCentral = new VBox(40, titulo, instrucciones, btnVolver);
         contenedorCentral.setAlignment(Pos.CENTER);
         contenedorCentral.setPadding(new Insets(30));

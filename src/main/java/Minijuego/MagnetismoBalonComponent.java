@@ -1,3 +1,5 @@
+// @author Gabriel Tremaria
+
 package Minijuego;
 
 import com.almasb.fxgl.entity.Entity;
@@ -33,7 +35,7 @@ public class MagnetismoBalonComponent extends Component {
         if (tieneElBalon) {
             balonFisico.getViewComponent().setVisible(false);
             
-            // FRENAMOS TODO: Movimiento recto y rotación (giro)
+            // Frena el movimiento cuando alguien la tiene
             fisicasBalon.setLinearVelocity(0, 0);
             fisicasBalon.setAngularVelocity(0); 
             
@@ -66,20 +68,15 @@ public class MagnetismoBalonComponent extends Component {
             double centroX = entity.getWidth() / 2.0;
             double centroY = entity.getHeight() / 2.0;
             
-            // CORRECCIÓN FÍSICA: Radio Jugador (18) + Radio Balón (10) = 28px. 
-            // Usamos 32px para dejar un margen seguro y que no nazcan solapados.
             double distanciaSegura = 32.0; 
             
             balonFalso.setTranslateX(centroX - 10 + (direccionActual.getX() * distanciaSegura));
             balonFalso.setTranslateY(centroY - 10 + (direccionActual.getY() * distanciaSegura));
         }
     }
-    // ==========================================
-    // LECTURA DE COORDENADAS PARA LA RED
-    // ==========================================
+    // Lectura de coordenadas para la red
     public Point2D getPosicionVisualBalon() {
         if (tieneElBalon && entity != null) {
-            // Calculamos la posición exacta del dibujo en el mundo
             double xReal = entity.getX() + balonFalso.getTranslateX();
             double yReal = entity.getY() + balonFalso.getTranslateY();
             return new Point2D(xReal, yReal);
@@ -87,13 +84,9 @@ public class MagnetismoBalonComponent extends Component {
         // Si no lo tiene nadie, devolvemos la posición de las físicas reales
         return new Point2D(balonFisico.getX(), balonFisico.getY());
     }
-    // ==========================================
-    // LIMPIEZA AUTOMÁTICA
-    // ==========================================
+    // Limpieza para que no quede un balón fantasma
     @Override
     public void onRemoved() {
-        // Cuando FXGL arranca este componente del pasador (Messi), 
-        // nos aseguramos de borrar su balón falso para que no quede como fantasma.
         if (tieneElBalon && entity != null) {
             entity.getViewComponent().removeChild(balonFalso);
         }

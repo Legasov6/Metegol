@@ -1,13 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+// @author Frank Farias
 package Entidades;
 import java.io.Serializable;
-/**
- *
- * @author legasov
- */
+
 public class Jugador implements Serializable{
     private String nombreDT;
     private int presupuesto;
@@ -50,7 +44,7 @@ public class Jugador implements Serializable{
         }
     }
     
-    // Método para devolver un futbolista al mercado y reembolsarle al jugador el dinero invertido
+    // Devuelve un futbolista al mercado y reembolsarle al jugador el dinero invertido
     public boolean devolverFutbolista(Futbolista jugadorDevuelto, MercadoFichajes mercado){
         //Verifica si el jugador esta en el equipo
         if(this.equipoAsignado.getTitulares().contains(jugadorDevuelto)){

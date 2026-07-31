@@ -1,3 +1,5 @@
+// @author Frank Farias
+
 package Entidades;
 
 import java.io.BufferedReader;
@@ -8,34 +10,30 @@ import java.util.List;
 
 public class MercadoFichajes {
     
-    // Este es tu "Banco Común"
+    /// El Banco Comun que guarda todos los jugadores
     private List<Futbolista> bancoComun;
 
     public MercadoFichajes() {
         this.bancoComun = new ArrayList<>();
     }
 
-    /**
-     * Lee el archivo CSV y carga los objetos polimórficos al banco común.
-     * @param rutaArchivo La ruta donde se encuentra jugadores.csv
-     */
+    //Carga los jugadores desde el archivo .csv
     public void cargarMercadoDesdeCSV(String rutaArchivo) {
         String linea = "";
         String separador = ",";
 
-        // El try-with-resources cierra automáticamente el BufferedReader al terminar
         try (BufferedReader br = new BufferedReader(new FileReader(rutaArchivo))) {
             
-            // 1. Leer y descartar la primera línea porque son las cabeceras del CSV
+            // Salta la primera linea pq son los cabezales de cada columna
             br.readLine();
 
-            // 2. Iterar línea por línea hasta el final del archivo
+            // Iterar línea por línea hasta el final del archivo
             while ((linea = br.readLine()) != null) {
                 
-                // Dividir la línea de texto en un arreglo usando la coma como separador
+                // Usa la coma como separador
                 String[] datos = linea.split(separador);
 
-                // Mapear los datos a variables (parseando los números)
+                // Pasa el texto a variables
                 String nombre = datos[0];
                 String pais = datos[1];
                 String posicion = datos[2];
@@ -53,7 +51,7 @@ public class MercadoFichajes {
 
                 Futbolista nuevoJugador = null;
 
-                // 3. Evaluar la posición para aplicar Polimorfismo e instanciar la clase correcta
+                // Lee el texto de posicion para llamar al constructor de cada tipo de futbolista
                 switch (posicion.toLowerCase()) {
                     case "delantero":
                         nuevoJugador = new Delantero(nombre, pais, velocidad, disparo, pase, defensa, precio);
@@ -65,14 +63,14 @@ public class MercadoFichajes {
                         nuevoJugador = new Defensor(nombre, pais, velocidad, disparo, pase, defensa, precio);
                         break;
                     case "portero":
-                        // El portero es el único al que le pasamos el atributo 'atajada'
+                        // El portero es el único al que le pasamos el atributo atajada
                         nuevoJugador = new Portero(nombre, pais, velocidad, disparo, pase, defensa, atajada, precio);
                         break;
                     default:
                         System.out.println("Posición desconocida para el jugador: " + nombre);
                 }
 
-                // 4. Si el objeto se creó con éxito, se añade a la lista general
+                // Si el futbolista se creó con éxito, se añade a la lista general
                 if (nuevoJugador != null) {
                     bancoComun.add(nuevoJugador);
                 }
@@ -81,15 +79,14 @@ public class MercadoFichajes {
             System.out.println("Éxito: Se cargaron " + bancoComun.size() + " jugadores al banco común.");
 
         } catch (IOException e) {
-            // Blindaje contra errores de lectura (ej. el archivo no existe)
+            // Excepción contra errores de lectura como si el archivo no existe
             System.err.println("Error crítico al leer el archivo CSV: " + e.getMessage());
         } catch (NumberFormatException e) {
-            // Blindaje por si en el CSV alguien puso una letra donde iba un número
+            // Por si en el CSV alguien puso una letra donde iba un número
             System.err.println("Error de formato numérico en el archivo de datos: " + e.getMessage());
         }
     }
 
-    // Método para obtener la lista
     public List<Futbolista> getBancoComun() {
         return bancoComun;
     }

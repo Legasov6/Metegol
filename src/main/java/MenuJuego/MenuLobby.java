@@ -1,3 +1,5 @@
+// @author Frank Farias
+
 package MenuJuego;
 
 import Logica.GestorJuego;
@@ -28,9 +30,7 @@ public class MenuLobby {
         subtitulo.setFill(Color.WHITE);
         subtitulo.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
-        // =========================================================
-        // BOTÓN 1: MODO OFFLINE (Pasa directo a armar el equipo)
-        // =========================================================
+        // Botón 1: Modo CPU (Pasa directo a armar el equipo) SOLO PARA PRUEBAS
         Button btnOffline = new Button("Jugar contra CPU");
         btnOffline.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold; -fx-cursor: hand;");
         btnOffline.setPrefSize(250, 50);
@@ -45,9 +45,7 @@ public class MenuLobby {
             FXGL.getGameScene().addUINode(MenuEquipos.crearInterfaz());
         });
 
-        // =========================================================
-        // BOTÓN 2: MODO ONLINE (Inicia el servidor y espera)
-        // =========================================================
+        // Botón 2: Modo online (Inicia el servidor y espera)
         Button btnOnline = new Button("Crear Sala Online");
         btnOnline.setStyle("-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold; -fx-cursor: hand;");
         btnOnline.setPrefSize(250, 50);
@@ -66,9 +64,7 @@ public class MenuLobby {
         contenedor.setAlignment(Pos.CENTER);
         panelFondo.getChildren().add(contenedor);
 
-        // =========================================================
-        // ACCIÓN DEL MODO ONLINE (La lógica que tenías originalmente)
-        // =========================================================
+        // Acción del modo online
         btnOnline.setOnAction(e -> {
             // Cambiamos los textos para indicar que estamos esperando
             titulo.setText("SALA DE ESPERA");
@@ -80,7 +76,7 @@ public class MenuLobby {
             ServidorLocal servidor = new ServidorLocal();
             GestorJuego.getInstance().setServidor(servidor);
 
-            // Pasamos el "Gatillo": Cuando alguien se conecte, cambiamos a MenuEquipos
+            // Cuando alguien se conecte, cambiamos a MenuEquipos
             servidor.iniciarServidor(() -> {
                 FXGL.getGameScene().clearUINodes();
                 FXGL.getGameScene().addUINode(MenuEquipos.crearInterfaz());

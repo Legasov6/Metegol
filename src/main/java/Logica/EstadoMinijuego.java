@@ -1,3 +1,5 @@
+// @author Gabriel Tremaria
+
 package Logica;
 
 import java.io.Serializable;
@@ -11,7 +13,6 @@ public class EstadoMinijuego implements Serializable {
     public double balonY;
 
     // Coordenadas de todos los jugadores en la cancha
-    // Usamos arreglos primitivos de double porque son lo más rápido de serializar en Java
     public double[] jugadoresX;
     public double[] jugadoresY;
 
@@ -25,7 +26,7 @@ public class EstadoMinijuego implements Serializable {
         minijuegoTerminado = false;
         mensajeFinal = "";
     }
-    // Variables para el Muro Defensivo
+    // Variables para el muro defensivo
     public boolean muroActivo;
     public double muroX;
     public double muroY;

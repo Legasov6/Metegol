@@ -1,6 +1,8 @@
 package Logica;
 
 import java.io.IOException;
+// @author Gabriel Tremaria
+
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -11,7 +13,6 @@ public class ClienteRed {
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
-    // Añade el "Runnable onExito"
     public void conectarAlServidor(String ipServidor, Runnable onExito) {
         new Thread(() -> {
             try {
@@ -22,8 +23,6 @@ public class ClienteRed {
                 out = new ObjectOutputStream(socket.getOutputStream());
                 out.flush();
                 in = new ObjectInputStream(socket.getInputStream());
-
-                // ¡LA MAGIA! 
                 javafx.application.Platform.runLater(onExito);
 
             } catch (IOException e) {

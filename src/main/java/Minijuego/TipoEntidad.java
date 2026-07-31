@@ -1,3 +1,5 @@
+// @author Gabriel Tremaria
+
 package Minijuego;
 
 public enum TipoEntidad {

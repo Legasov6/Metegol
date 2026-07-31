@@ -1,3 +1,5 @@
+// @author Gabriel Tremaria
+
 package Logica;
 
 import java.io.Serializable;
@@ -15,9 +17,9 @@ public class ComandoRed implements Serializable {
     public boolean cambiarDefensor; // Tecla Q
     public boolean controlarPortero; // Barra Espaciadora
 
-    // Acciones de Habilidad (Patear / Muro)
+    // Acciones de Habilidad (Patear y el muro)
     public boolean clickIzquierdo;
-    public double mouseX; // Vital para saber hacia dónde apuntó el cliente al disparar
+    public double mouseX; // Para saber hacia dónde apuntó el cliente al disparar
     public double mouseY;
 
     public ComandoRed() {

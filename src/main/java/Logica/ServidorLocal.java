@@ -1,3 +1,5 @@
+// @author Gabriel Tremaria
+
 package Logica;
 
 import java.io.IOException;
@@ -13,8 +15,7 @@ public class ServidorLocal {
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
-    // Usaremos el puerto 5555 por defecto
-    // Añade el "Runnable onExito" en los paréntesis
+    // Usamos el puerto 5555
     public void iniciarServidor(Runnable onExito) {
         new Thread(() -> {
             try {
@@ -22,14 +23,13 @@ public class ServidorLocal {
                 serverSocket = new ServerSocket(5555);
                 System.out.println("[HOST] Esperando a que el Jugador 2 se conecte...");
                 
-                socket = serverSocket.accept(); // El hilo se pausa aquí
+                socket = serverSocket.accept(); // Hace una pausa
                 
                 System.out.println("[HOST] ¡Conexión establecida con éxito!");
                 out = new ObjectOutputStream(socket.getOutputStream());
                 out.flush();
                 in = new ObjectInputStream(socket.getInputStream());
 
-                // ¡LA MAGIA! Ejecuta el cambio de pantalla de forma segura en JavaFX
                 javafx.application.Platform.runLater(onExito);
 
             } catch (IOException e) {
@@ -38,7 +38,6 @@ public class ServidorLocal {
         }).start();
     }
     
-    // Dejamos los getters listos para cuando necesitemos enviar/recibir datos
     public ObjectOutputStream getOut() { return out; }
     public ObjectInputStream getIn() { return in; }
 }

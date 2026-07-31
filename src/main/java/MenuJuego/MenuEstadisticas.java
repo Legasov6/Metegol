@@ -1,3 +1,5 @@
+// @author Frank Farias
+
 package MenuJuego;
 
 import Entidades.RegistroCampeon;
@@ -26,9 +28,7 @@ public class MenuEstadisticas {
         titulo.setFont(Font.font("Impact", 50));
         titulo.setFill(Color.GOLD);
 
-        // =========================================================
-        // CREACIÓN DE LA TABLA
-        // =========================================================
+        // Crea la tabla
         TableView<RegistroCampeon> tabla = new TableView<>();
         tabla.setPrefSize(800, 400);
         tabla.setMaxSize(800, 400);

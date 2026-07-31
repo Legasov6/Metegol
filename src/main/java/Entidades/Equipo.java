@@ -1,7 +1,5 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+// @author Frank Farias
+
 package Entidades;
 
 
@@ -9,10 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.Serializable;
 
-/**
- *
- * @author legasov
- */
 public class Equipo implements Serializable {
     private static final long serialVersionUID = 1L; //Identificador único para el envio de paquetes para el online
     private String nombrePais;
@@ -36,9 +30,7 @@ public class Equipo implements Serializable {
         titulares.remove(f);
     }
     
-    // ==========================================
-    // MÉTODOS DE EXTRACCIÓN PARA DELANTEROS
-    // ==========================================
+    // Getters de delanteros
     public int getPaseDelanteros() {
         int total = 0;
         for (Futbolista f : titulares) {
@@ -59,9 +51,7 @@ public class Equipo implements Serializable {
         return total;
     }
 
-    // ==========================================
-    // MÉTODOS DE EXTRACCIÓN PARA MEDIOCAMPISTAS
-    // ==========================================
+    // Getters de medios
     public int getPaseMediocampistas() {
         int total = 0;
         for (Futbolista f : titulares) {
@@ -92,9 +82,7 @@ public class Equipo implements Serializable {
         return total;
     }
 
-    // ==========================================
-    // MÉTODOS DE EXTRACCIÓN PARA DEFENSORES
-    // ==========================================
+    // Getters de defensores
     public int getPaseDefensores() {
         int total = 0;
         for (Futbolista f : titulares) {

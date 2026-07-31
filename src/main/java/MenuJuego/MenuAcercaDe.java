@@ -1,3 +1,5 @@
+// @author Frank Farias
+
 package MenuJuego;
 
 import com.almasb.fxgl.dsl.FXGL;
@@ -18,7 +20,7 @@ public class MenuAcercaDe {
         StackPane panelFondo = new StackPane();
         panelFondo.setPrefSize(FXGL.getAppWidth(), FXGL.getAppHeight());
 
-        // 1. FONDO CON FILTRO OSCURO
+        // Fondo con filtro oscuro
         try {
             var fondoView = FXGL.texture("fondoMenu.png", FXGL.getAppWidth(), FXGL.getAppHeight());
             panelFondo.getChildren().add(fondoView);
@@ -30,12 +32,12 @@ public class MenuAcercaDe {
         filtroOscuro.setFill(Color.rgb(0, 0, 0, 0.90)); // Opacidad alta para leer bien los créditos
         panelFondo.getChildren().add(filtroOscuro);
 
-        // 2. TÍTULO
+        // Titulo
         Text titulo = new Text("ACERCA DE METEGOL");
         titulo.setFont(Font.font("Impact", 50));
         titulo.setFill(Color.GOLD);
 
-        // 3. TEXTO DE INFORMACIÓN (Corregido y actualizado)
+        // Texto de la información
         Text informacion = new Text(
             "=== DATOS INSTITUCIONALES ===\n" +
             "Universidad Nacional Experimental de Guayana.\n" +
@@ -44,12 +46,12 @@ public class MenuAcercaDe {
             "Asignatura: Técnicas de Programación 3.\n\n" +
             
             "=== ESPECIFICACIONES TÉCNICAS ===\n" +
-            "• Entorno de Desarrollo: NetBeans IDE sobre Linux (Fedora / KDE Plasma).\n" +
+            "• Entorno de Desarrollo: NetBeans IDE.\n" +
             "• Versión de Java utilizada: Java SE 17 / 21.\n" +
-            "• Herramienta de diseño UML: Enterprise Architect / Visual Paradigm.\n" +
-            "• FXGL (FX Game Library): Framework principal para la gestión de escenas y motor del juego.\n" +
-            "• JavaFX: Estructuración visual de la interfaz de usuario.\n" +
-            "• Java Sockets (java.net / java.io): Arquitectura de red Cliente-Servidor multijugador.\n\n" +
+            "• Herramienta de diseño UML: Gaphor.\n" +
+            "• Framework principal para la gestión de escenas y motor del juego: FXGL (FX Game Library).\n" +
+            "• Interfaz de usuario: JavaFX.\n" +
+            "• Arquitectura de red Cliente-Servidor para multijugador: Java Sockets (java.net / java.io).\n\n" +
             
             "=== RESEÑAS DE LOS DESARROLLADORES ===\n" +
             "• Gabriel Tremaria: Arquitectura general y creación del minijuego 2D con físicas Box2D.\n" +
@@ -63,7 +65,7 @@ public class MenuAcercaDe {
         informacion.setTextAlignment(TextAlignment.CENTER);
         informacion.setLineSpacing(3);
 
-        // 4. BOTÓN DE VOLVER
+        // Botón Volver
         Button btnVolver = new Button("Volver al Menú");
         btnVolver.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold; -fx-cursor: hand;");
         btnVolver.setPrefSize(250, 50);
@@ -72,7 +74,7 @@ public class MenuAcercaDe {
             FXGL.getGameScene().addUINode(MenuPrincipal.crearInterfaz());
         });
 
-        // 5. ENSAMBLAJE
+        // Montaje
         VBox contenedorCentral = new VBox(25, titulo, informacion, btnVolver);
         contenedorCentral.setAlignment(Pos.CENTER);
         contenedorCentral.setPadding(new Insets(20));

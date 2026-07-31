@@ -1,3 +1,5 @@
+// @author Gabriel Tremaria
+
 package Minijuego;
 
 import Entidades.Futbolista;
@@ -20,19 +22,18 @@ import javafx.scene.shape.Rectangle;
 
 public class FabricaMinijuego implements EntityFactory {
 
-    // 1. LA PELOTA
+    //LA PELOTA
     @Spawns("balon")
     public Entity newBalon(SpawnData data) {
         PhysicsComponent physics = new PhysicsComponent();
        physics.setBodyType(BodyType.DYNAMIC);
         
-        // Físicas reales para el balón: poco peso, buen rebote (restitution) y fricción
-        FixtureDef fd = new FixtureDef().density(0.3f).restitution(0.6f).friction(0.4f);
+        FixtureDef fd = new FixtureDef().density(0.3f).restitution(0.6f).friction(0.4f); //Atributos que FXGL pide para el balón
         physics.setFixtureDef(fd);
 
         return FXGL.entityBuilder(data)
                 .type(TipoEntidad.BALON)
-                .bbox(new HitBox(BoundingShape.circle(10))) // Radio de 10px
+                .bbox(new HitBox(BoundingShape.circle(10))) // El tamaño del hitbox
                 .view(new Circle(10, Color.WHITE))
                 .with(physics)
                 .with(new CollidableComponent(true)) // Permite detectar colisiones
@@ -45,10 +46,10 @@ public class FabricaMinijuego implements EntityFactory {
         Futbolista stats = data.get("datos");
         boolean esAtacante = data.get("esAtacante");
          
-        // Obtenemos la dirección de ataque (Por defecto asumimos que ataca hacia arriba para evitar nulls)
+        // Obtenemos la dirección de ataque
         boolean atacaHaciaArriba = data.hasKey("atacaHaciaArriba") ? data.get("atacaHaciaArriba") : true;
         
-        // 1. Determinar el color según el país
+        // 1. Determinar el color del futbolista según el país
         javafx.scene.paint.Color colorEquipo = javafx.scene.paint.Color.GRAY; 
         String nombrePais = stats.getPais(); 
         
@@ -61,7 +62,7 @@ public class FabricaMinijuego implements EntityFactory {
             }
         }
 
-        // 2. Crear los gráficos (Círculo + Texto)
+        // 2. Crear los gráficos del futbolista
         javafx.scene.shape.Circle circulo = new javafx.scene.shape.Circle(15, colorEquipo);
         circulo.setStroke(javafx.scene.paint.Color.BLACK);
         circulo.setStrokeWidth(2);
@@ -71,7 +72,7 @@ public class FabricaMinijuego implements EntityFactory {
         textoNombre.setTranslateX(-10);   
         textoNombre.setTranslateY(-20);   
 
-        // 3. Físicas Sólidas (Dynamic para que choquen y se bloqueen)
+        // 3. Físicas sólidas (Dynamic para que choquen y se bloqueen)
         PhysicsComponent physics = new PhysicsComponent();
         physics.setBodyType(com.almasb.fxgl.physics.box2d.dynamics.BodyType.DYNAMIC);
 
@@ -87,15 +88,9 @@ public class FabricaMinijuego implements EntityFactory {
     }
 
 
-    
-    // ==========================================
-    // CAJAS DE COLISIÓN DE TILED
-    // ==========================================
-
+    // Colisiones de Tiled
     @Spawns("limite")
     public Entity newLimite(SpawnData data) {
-        // Al NO ponerle un PhysicsComponent, Box2D ignorará este objeto para los rebotes físicos,
-        // pero FXGL seguirá usando el HitBox para disparar nuestro evento de colisión lógica.
         return FXGL.entityBuilder(data)
                 .type(TipoEntidad.LIMITE_CANCHA)
                 .bbox(new HitBox(BoundingShape.box(data.<Integer>get("width"), data.<Integer>get("height"))))
@@ -112,17 +107,14 @@ public class FabricaMinijuego implements EntityFactory {
                 .type(TipoEntidad.PORTERIA)
                 .bbox(new HitBox(BoundingShape.box(data.<Integer>get("width"), data.<Integer>get("height"))))
                 .with(physics)
-                .with(new com.almasb.fxgl.entity.components.CollidableComponent(true)) // <-- Y AQUÍ TAMBIÉN
+                .with(new com.almasb.fxgl.entity.components.CollidableComponent(true))
                 .build();
     }
     
-    @Spawns("palo")
+    @Spawns("palo") //La pelota rebota de este
     public Entity newPalo(SpawnData data) {
         PhysicsComponent physics = new PhysicsComponent();
         physics.setBodyType(BodyType.STATIC); 
-        // Nota: Al ser STATIC y tener colisiones, la pelota rebotará naturalmente contra él
-        // gracias al motor Box2D de FXGL, exactamente como si fuera una pared.
-
         return FXGL.entityBuilder(data)
                 .type(TipoEntidad.PALO)
                 .bbox(new HitBox(BoundingShape.box(data.<Integer>get("width"), data.<Integer>get("height"))))

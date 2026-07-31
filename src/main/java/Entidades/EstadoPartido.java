@@ -1,3 +1,5 @@
+// @author Frank Farias
+
 package Entidades;
 
 import java.io.Serializable;

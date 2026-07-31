@@ -1,13 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+// @author Frank Farias
+
 package Entidades;
 import java.io.Serializable;
-/**
- *
- * @author legasov
- */
+
 public class Futbolista implements Serializable{
     
     private static final long serialVersionUID = 1L; //Identificador único para el envio de paquetes para el online
