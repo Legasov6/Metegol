@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Metegol;
 
 import com.almasb.fxgl.entity.Entity;
@@ -16,7 +12,6 @@ import com.almasb.fxgl.physics.box2d.dynamics.BodyType;
 
 public class Cancha implements EntityFactory {
 
-// 1. LAS BANDAS (Sensores)
     @Spawns("BANDA")
     public Entity crearBanda(SpawnData data) {
         double width = Double.parseDouble(data.get("width").toString());
@@ -29,7 +24,6 @@ public class Cancha implements EntityFactory {
                 .build();
     }
 
-    // 2. EL FONDO (Sensores para Córner)
     @Spawns("FONDO")
     public Entity crearFondo(SpawnData data) {
         double width = Double.parseDouble(data.get("width").toString());
@@ -42,7 +36,6 @@ public class Cancha implements EntityFactory {
                 .build();
     }
 
-    // 3. LA LÍNEA DE GOL (Sensor de anotación)
     @Spawns("GOL")
     public Entity crearGol(SpawnData data) {
         double width = Double.parseDouble(data.get("width").toString());
@@ -55,7 +48,6 @@ public class Cancha implements EntityFactory {
                 .build();
     }
 
-    // 4. LA RED FÍSICA (Muro sólido)
     @Spawns("RED")
     public Entity crearRed(SpawnData data) {
         double width = Double.parseDouble(data.get("width").toString());

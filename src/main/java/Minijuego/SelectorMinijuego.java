@@ -1,5 +1,3 @@
-// @author Gabriel Tremaria
-
 package Minijuego;
 
 import Entidades.Futbolista;
@@ -10,9 +8,20 @@ import Entidades.Mediocampista;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Clase auxiliar que se usa para filtrar a los futbolistas mas óptimos para las jugadas
+ * antes de hacerlos aparecer en el minijuego 2D.
+ * @author GabrielTremaria
+ * 
+ */
 public class SelectorMinijuego {
 
-    // Selecciona los atacantes
+    /**
+     * Descarta a los defensores/porteros y clasifica a los mediocampistas/delanteros 
+     * basándose en su ratio de potencia ofensiva (Tiro / Velocidad), tomando a los 2 mejores
+     * @param equipoCompleto
+     * @return Dos jugadores que atacarán
+     */
     public static List<Futbolista> seleccionarAtacantes(List<Futbolista> equipoCompleto) {
         return equipoCompleto.stream()
                 // No pueden ser Porteros ni Defensores
@@ -32,7 +41,12 @@ public class SelectorMinijuego {
     }
 
 
-    // Selección de defensores
+    /**
+     * Busca obligatoriamente un Portero y extrae a los 3 primeros Defensor que 
+     * encuentre en la plantilla, armando un bloque defensivo de 4 hombres
+     * @param equipoCompleto
+     * @return Los defensores más el portero
+     */
     public static List<Futbolista> seleccionarDefensores(List<Futbolista> equipoCompleto) {
         // Aislamos al portero
         Futbolista portero = equipoCompleto.stream()

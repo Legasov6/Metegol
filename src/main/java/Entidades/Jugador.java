@@ -1,7 +1,12 @@
-// @author Frank Farias
 package Entidades;
 import java.io.Serializable;
 
+/**
+ * Representar al Director Técnico, el rol que asume el usuario en el sistema.
+ * Controla el presupuesto disponible y ejecuta la lógica de negocios del
+ * mercado de fichajes. Implementa Serializable.
+ * @author FrankFarias
+ */
 public class Jugador implements Serializable{
     private String nombreDT;
     private int presupuesto;
@@ -13,8 +18,13 @@ public class Jugador implements Serializable{
         this.presupuesto = presupuesto;
         this.equipoAsignado = equipoAsignado;
     }
-    //Método para comprar un futbolista. Devuelve true si la compra es exitosa
-    public boolean comprarFutbolista(Futbolista fichaje, MercadoFichajes mercado){
+/** Verifica si el director técnico puede agregar un objeto Futbolista a su equipo
+ * @param fichaje El objeto Futbolista que se intenta fichar
+ * @param mercado El banco común de jugadores 
+ * @return true si el Director Técnico tiene cupos disponibles en su equipo y si 
+ * tiene los fondos suficientes. 
+ */
+public boolean comprarFutbolista(Futbolista fichaje, MercadoFichajes mercado){
         // Verifica que haya espacio en el equipo
         if(this.equipoAsignado.getTitulares().size()>=11){
             System.out.println("Equipo lleno. Debes devolver a un jugador antes de comprar otro");
@@ -44,7 +54,12 @@ public class Jugador implements Serializable{
         }
     }
     
-    // Devuelve un futbolista al mercado y reembolsarle al jugador el dinero invertido
+    /** Verifica si el Director Técnico tiene al jugador en su equipo, lo devuelve
+     * al banco comun y le regresa el costo del futbolista
+     * @param jugadorDevuelto
+     * @param mercado
+     * @return true si el DT sí lo tiene, false si el jugador no está
+     */
     public boolean devolverFutbolista(Futbolista jugadorDevuelto, MercadoFichajes mercado){
         //Verifica si el jugador esta en el equipo
         if(this.equipoAsignado.getTitulares().contains(jugadorDevuelto)){

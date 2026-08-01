@@ -1,5 +1,3 @@
-// @author Gabriel Tremaria
-
 package Logica;
 
 import Entidades.RegistroCampeon;
@@ -12,11 +10,22 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Administra la persistencia de datos (guardado y lectura de
+información de los ganadores) en el disco duro local, actuando
+como interfaz de base de datos plana.
+* @author FrankFarias
+ */
 public class GestorEstadisticas {
     
     // Ruta del registro de campeones
     private static final String RUTA_ARCHIVO = "recursos/campeones.csv";
-
+    
+    /**
+     * Agrega un nuevo registro al final del archivo CSV sin sobreesribir el 
+     * historial existente
+     * @param nuevoCampeon 
+     */
     public static void guardarCampeon(RegistroCampeon nuevoCampeon) {
         // Para añadir texto al final, no sobreeescribir
         try (FileWriter fw = new FileWriter(RUTA_ARCHIVO, true);
@@ -29,7 +38,10 @@ public class GestorEstadisticas {
             System.err.println("Error al guardar el campeón: " + e.getMessage());
         }
     }
-
+    /**
+     * Lee el CSV y parsea cada línea para reconstruir el historial de campeones
+     * @return historial para que MenuEstadisticas lo muestre con un TableView
+     */
     public static List<RegistroCampeon> obtenerHistorial() {
         List<RegistroCampeon> historial = new ArrayList<>();
         File archivo = new File(RUTA_ARCHIVO);

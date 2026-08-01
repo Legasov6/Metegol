@@ -1,10 +1,13 @@
-// @author Frank Farias
-
 package Entidades;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Clase que estructura los datos de una victoria para su posterior
+ * persistencia en el historial (Salón de la Fama).
+ * @author FrankFarias
+ */
 public class RegistroCampeon {
     private String nombreDT;
     private String seleccion;
@@ -26,11 +29,17 @@ public class RegistroCampeon {
     public String getMarcadorFinal() { return marcadorFinal; }
     public String getFechaHora() { return fechaHora; }
     
-    // Formato CSV
+    /**
+     * Concatena los atributos separados por comas para su escritura
+     * en archivo de texto.
+     */
     public String toCSV() {
         return nombreDT + "," + seleccion + "," + marcadorFinal + "," + fechaHora;
     }
-    
+    /**
+     * Permite inyectar una fecha leída desde el disco duro.
+     * @param fechaHoraHistorica 
+     */
     public void setFechaHora(String fechaHoraHistorica) {
         this.fechaHora = fechaHoraHistorica;
     }

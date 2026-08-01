@@ -1,5 +1,3 @@
-// @author Frank Farias
-
 package MenuJuego;
 
 import Logica.GestorJuego;
@@ -23,6 +21,12 @@ import javax.swing.JOptionPane;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+/**
+ * Muestra la información del partido  durante el transcurso matemático 
+ * del encuentro. Actúa de puente entre el motor del juego y la pantalla del 
+ * jugador, orquestando las interrupciones para lanzar el minijuego 2D.
+ * @author FrankFarias
+ */
 public class PantallaSimulacion {
 
     private static TimerAction timerPartido; 
@@ -32,6 +36,12 @@ public class PantallaSimulacion {
     public static String ultimoRelojCliente = "00'";
     public static String ultimaNarracionCliente = "¡Los equipos están en la cancha! Esperando el pitazo inicial...";
     
+    /**
+     * Si la computadora es Host, ejecuta el bucle iterativo de 1.5s que lee del
+     * MotorSimulacion. Si es Cliente, inicia un hilo pasivo que escucha y 
+     * actualiza el texto según los paquetes recibidos en el Socket.
+     * @return 
+     */
     public static StackPane crearInterfaz() {
         StackPane panelFondo = new StackPane();
         panelFondo.setPrefSize(FXGL.getAppWidth(), FXGL.getAppHeight());
@@ -264,12 +274,24 @@ public class PantallaSimulacion {
         return panelFondo;
     }
     
-    // Volvemos a crear el HUD despues de cerrar el minijuego
+    /**
+     * Vuelve a dibujar el estadio y los marcadores tras finalizar el minijuego 
+     * 2D.
+     */
     public static void reanudarDesdeMinijuego() {
         FXGL.getGameScene().addUINode(crearInterfaz());
     }
     
-    // Método auxiliar para no repetir código de red
+    /**
+     * Empaqueta el estado actual de la simulación en un Data Transfer Object (DTO) 
+     * y lo transmite a través de la red mediante Sockets TCP. Este método solo 
+     * se ejecuta si la computadora local está actuando como Servidor (Host). Además, aplica un 
+     * reset() al canal de salida para evitar que Java serialice datos en caché obsoletos.
+     * @param motor La instancia actual del motor matemático, utilizada para extraer 
+     * el minuto actual y el marcador de goles.
+     * @param texto La narración del evento o jugada que se mostrará en el HUD del Cliente.
+     * @param esFin Bandera booleana que indica al Cliente si el partido ha finalizado.
+     */
     private static void transmitirEstadoAlCliente(MotorSimulacion motor, String texto, boolean esFin) {
         if (GestorJuego.getInstance().isEsHost() && GestorJuego.getInstance().getServidor() != null) {
             try {

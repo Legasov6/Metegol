@@ -1,9 +1,12 @@
-// @author Frank Farias
-
 package Entidades;
 
 import java.io.Serializable;
 
+/**
+ * Objeto de Transferencia de Datos que empaqueta el 
+ * estado de la simulación matemática para ser sincronizado por red.
+ * @author GabrielTremaria
+ */
 public class EstadoPartido implements Serializable {
     private static final long serialVersionUID = 1L;
     

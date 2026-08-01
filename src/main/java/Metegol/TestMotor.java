@@ -39,12 +39,10 @@ public class TestMotor {
             // EL MOCK DEL MINIJUEGO
             if (simulador.isEnMinijuego()) {
                 
-                // Creamos la ventanita emergente con botones personalizados
                 String equipoAtacando = simulador.getEquipoAtacante().getNombrePais();
                 String mensaje = "¡Ocasión de peligro para " + equipoAtacando + "!\n¿Lograste meter el gol?";
                 String[] opciones = {"¡GOLAZO!", "Fallé / La atajaron"};
                 
-                // showOptionDialog pausa la ejecución hasta que hagas clic en un botón
                 int respuesta = JOptionPane.showOptionDialog(null,
                         mensaje,
                         "Simulador de Minijuego",
@@ -54,20 +52,13 @@ public class TestMotor {
                         opciones,
                         opciones[0]);
 
-                // Evaluamos qué botón presionaste (0 es el primer botón, 1 es el segundo)
                 boolean huboGol = (respuesta == 0);
                 
-                // Si hubo gol, le avisamos al motor para que actualice el marcador
                 if (huboGol) {
                     simulador.registrarGol(simulador.getEquipoAtacante());
                 }
-                
-                // Le avisamos al motor que el minijuego terminó.
-                // Supongamos que esta jugada te tomó 2 minutos del reloj del partido.
                 simulador.finalizarMinijuego(2, huboGol);
-            }
-            
-            // Pausamos un poco la consola para poder leerla
+            }            
             Thread.sleep(600); 
         }
         

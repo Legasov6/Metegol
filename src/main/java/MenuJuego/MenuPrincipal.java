@@ -1,5 +1,3 @@
-// @author Frank Farias
-
 package MenuJuego;
 
 import Minijuego.EscenaMinijuego;
@@ -12,8 +10,21 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
+/**
+ * El nodo raíz de navegación de la aplicación gráfica. 
+ * Permite al usuario acceder a todas las funcionalidades
+ * del juego mediante menús ramificados
+ * @author FrankFarias
+ */
 public class MenuPrincipal {
-
+    
+    /**
+     * Construye y retorna el panel contenedor principal de JavaFX (StackPane). 
+     * Configura los eventos gráficos (hover) y las acciones de los botones, 
+     * incluyendo el cuadro de diálogo para solicitar la IP de conexión en caso 
+     * de que el usuario decida unirse como Cliente.
+     * @return El panel gráfico
+     */
     public static StackPane crearInterfaz() {
         StackPane panelFondo = new StackPane();
         panelFondo.setPrefSize(FXGL.getAppWidth(), FXGL.getAppHeight());

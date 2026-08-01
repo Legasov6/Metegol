@@ -1,5 +1,3 @@
-// @author Gabriel Tremaria
-
 package Minijuego;
 
 import com.almasb.fxgl.entity.Entity;
@@ -9,6 +7,12 @@ import javafx.geometry.Point2D;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
+/**
+ * Simular la conducción del balón (Dribbling). Apaga el modelo de colisión de 
+ * la pelota real para evitar rebotes erráticos contra las piernas del 
+ * jugador y renderiza un dibujo falso adherido a sus pies.
+ * @autor GabrielTremaria
+ */
 public class MagnetismoBalonComponent extends Component {
     
     private Entity balonFisico;
@@ -26,6 +30,11 @@ public class MagnetismoBalonComponent extends Component {
         return tieneElBalon;
     }
 
+    /**
+     * Oculta el balón físico, cancela sus fuerzas lineales/angulares y lo 
+     * teleporta, conectando el gráfico falso al jugador que conduce.
+     * @param nuevoEstado 
+     */
     public void setTieneElBalon(boolean nuevoEstado) {
         if (this.tieneElBalon == nuevoEstado) return;
         this.tieneElBalon = nuevoEstado;
@@ -53,7 +62,12 @@ public class MagnetismoBalonComponent extends Component {
             balonFisico.getViewComponent().setVisible(true);
         }
     }
-
+    
+    /**
+     * Método que se ejecuta cada fotograma. Lee la velocidad del jugador para 
+     * mover el gráfico del balón con él.
+     * @param tpf Time per Frame
+     */
     @Override
     public void onUpdate(double tpf) {
         if (tieneElBalon) {
@@ -74,7 +88,11 @@ public class MagnetismoBalonComponent extends Component {
             balonFalso.setTranslateY(centroY - 10 + (direccionActual.getY() * distanciaSegura));
         }
     }
-    // Lectura de coordenadas para la red
+    /**
+     * Le expone al motor de red las coordenadas visuales reales del
+     * balón falso para que el Cliente lo vea correctamente.
+     * @return La posición real del balón
+     */
     public Point2D getPosicionVisualBalon() {
         if (tieneElBalon && entity != null) {
             double xReal = entity.getX() + balonFalso.getTranslateX();

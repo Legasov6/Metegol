@@ -11,16 +11,13 @@ public class PruebaMercado {
     
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        
-        // 1. Inicializar y cargar el mercado global
-        MercadoFichajes mercado = new MercadoFichajes();
+                MercadoFichajes mercado = new MercadoFichajes();
         mercado.cargarMercadoDesdeCSV("recursos/Plantilla.csv"); 
 
         System.out.println("==================================================");
         System.out.println("      CHAMPS 2026 - CONFIGURACIÓN DE LA FINAL     ");
         System.out.println("==================================================\n");
 
-        // 2. Registro de Usuarios (Sin Autenticación)
         System.out.println("--- REGISTRO DEL JUGADOR 1 ---");
         System.out.print("Ingrese su nombre (DT 1): ");
         String nombreDT1 = scanner.nextLine();
@@ -35,13 +32,11 @@ public class PruebaMercado {
         String pais2 = scanner.nextLine();
         Jugador dt2 = new Jugador(nombreDT2, 1000, new Equipo(pais2));
 
-        // 3. Fase de Mercado (Turnos)
         System.out.println("\n¡Registro completado! Pasando a la fase de fichajes...");
         
         gestionarTurnoDT(dt1, mercado, scanner);
         gestionarTurnoDT(dt2, mercado, scanner);
 
-        // 4. Cierre del Sprint 1
         System.out.println("==================================================");
         System.out.println(" ¡AMBAS PLANTILLAS CONFIRMADAS! EL PARTIDO VA A COMENZAR.");
         System.out.println("==================================================");
@@ -77,7 +72,6 @@ public class PruebaMercado {
                     List<Futbolista> disponibles = mercado.getBancoComun();
                     for (int i = 0; i < disponibles.size(); i++) {
                         Futbolista f = disponibles.get(i);
-                        // Imprime el índice entre corchetes antes del nombre
                         System.out.println("[" + i + "] " + f.getNombre() + " (" + f.getClass().getSimpleName() + ") | Costo: " + f.getPrecio());
                     }
                     break;
@@ -91,9 +85,7 @@ public class PruebaMercado {
                     System.out.print("\nIngresa el NÚMERO del jugador a fichar (Ej: 0, 1, 2...): ");
                     try {
                         int indiceFichaje = Integer.parseInt(scanner.nextLine());
-                        List<Futbolista> banco = mercado.getBancoComun();
-                        
-                        // Validar que el número ingresado exista en la lista actual
+                        List<Futbolista> banco = mercado.getBancoComun();                       
                         if (indiceFichaje >= 0 && indiceFichaje < banco.size()) {
                             Futbolista fichaje = banco.get(indiceFichaje);
                             dt.comprarFutbolista(fichaje, mercado);
@@ -142,7 +134,6 @@ public class PruebaMercado {
                             System.out.println("[" + i + "] " + misTitulares.get(i).getNombre() + " (" + misTitulares.get(i).getClass().getSimpleName() + ")");
                         }
                     }
-                    //System.out.println("Estadística de Pase del Equipo: " + dt.getEquipoAsignado().calcularPaseTotal());
                     break;
 
                 case "5":

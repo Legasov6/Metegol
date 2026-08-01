@@ -1,8 +1,13 @@
-// @author Gabriel Tremaria
-
 package Logica;
 
 import java.io.Serializable;
+
+/**
+ * Servir como un DTO (Data Transfer Object) que encapsula las
+ * pulsaciones del teclado y el uso del ratón del usuario,
+ * enviándolas en un paquete liviano al contrincante a través de
+ * la red. Implementa Serializable.
+ */
 
 public class ComandoRed implements Serializable {
     private static final long serialVersionUID = 1L;

@@ -1,5 +1,3 @@
-// @author Gabriel Tremaria
-
 package Minijuego;
 
 import Entidades.Futbolista;
@@ -20,6 +18,12 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
+/**
+ * Es el controlador principal de la jugabilidad en tiempo real 2D. Controla la 
+ * creación de la cancha, la lectura de controles (inputs), el cálculo de 
+ * colisiones mediante Box2D y la sincronización a 60 FPS a través de la red.
+ * @author GabrielTremaria
+ */
 public class EscenaMinijuego {
 
     private static Entity jugadorActivo;
@@ -65,6 +69,14 @@ public class EscenaMinijuego {
         return !gestor.isEsHost() && gestor.getCliente() != null;
     }
     
+   /**
+     * Prepara el entorno gráfico y físico del minijuego 2D.
+     * Limpia la pantalla, registra la fábrica de entidades (Patrón Factory), 
+     * carga el mapa TMX y genera dinámicamente a los futbolistas basándose en 
+     * qué portería se debe atacar. Finalmente, configura los manejadores de colisión (Box2D).
+     * @param atacanteEsLocal Determina quién tiene el turno ofensivo. Si es true, 
+     * el equipo local (Host) ataca. Si es false, defiende.
+     */
     public static void iniciarMinijuego(Boolean atacanteEsLocal) {
         minijuegoTerminado = false; 
         jugadorActivo = null; // Limpiamos al jugador del turno anterior
@@ -330,6 +342,12 @@ public class EscenaMinijuego {
     }
 
 
+    /**
+     * Mapea los eventos de teclado (WASD, Q, Espacio) y ratón a acciones del juego.
+     * Si la instancia es el Servidor (Host), aplica las fuerzas físicas de FXGL
+     * directamente sobre los cuerpos de Box2D. Si es el Cliente, únicamente 
+     * registra las intenciones en el objeto ComandoRed para ser enviadas por los Sockets.
+     */
    private static void configurarControles() {
         Logica.GestorJuego gestor = Logica.GestorJuego.getInstance();
         // Definimos si esta computadora es exclusivamente un Cliente Online
@@ -509,7 +527,12 @@ public class EscenaMinijuego {
         });
     }
 
-    // MOTOR DE RED
+    /**
+     * Inicia la comunicación multijugador para el minijuego. Lanza un hilo 
+     * encargado de escuchar los paquetes entrantes sin congelar la interfaz. 
+     * Además, inicializa un temporizador para transmitir el estado del minijuego o 
+     * los comandos del jugador.
+     */
     private static void iniciarRedMinijuego() {
         Logica.GestorJuego gestor = Logica.GestorJuego.getInstance();
         boolean esOnline = (gestor.getServidor() != null || gestor.getCliente() != null);
@@ -565,6 +588,12 @@ public class EscenaMinijuego {
         }, javafx.util.Duration.millis(16));
     }
 
+    /**
+     * Escanea el mundo de físicas de Box2D y toma las coordenadas X, Y del balón, 
+     * de todos los futbolistas y del muro defensivo activo y empaqueta esos datos
+     * en un DTO.
+     * @return El objeto EstadoMinijuego poblado y listo para ser serializado por la red.
+     */
     private static Logica.EstadoMinijuego empaquetarEstado() {
         java.util.List<Entity> todosLosJugadores = FXGL.getGameWorld().getEntitiesByType(TipoEntidad.JUGADOR_ATACANTE, TipoEntidad.JUGADOR_DEFENSOR);
         Logica.EstadoMinijuego estado = new Logica.EstadoMinijuego(todosLosJugadores.size());
@@ -613,6 +642,14 @@ public class EscenaMinijuego {
         return estado;
     }
 
+    /**
+     * Recibe el estado empaquetada con los datos de lo que pasa en el minijuego
+     * desde el Servidor y sobreescribe el Estado que tiene el cliente. Apaga temporalmente
+     * las fisicas del cliente para que sea el host quien dicte la realidad con
+     * las coordenadas que transmita.
+     * @param estado El DTO recibido por la red con las posiciones precisas de 
+     * esta fracción de segundo.
+     */
     private static void actualizarPantallaCliente(Logica.EstadoMinijuego estado) {
         // 1. Apaga el magnestismo dela pelota local
         // Si el cliente cree que tiene el balón, lo suelta para que sea el host quien dicte las coordenadas reales
@@ -658,14 +695,23 @@ public class EscenaMinijuego {
         }
     }
 
-    // HABILIDADES DE LOS FUTBOLISTAS
+    /**
+     * El método que maneja la conexión entre las físicas y las interacciones del
+     * jugador para efectuar un disparo si tiene el balón.
+     * @param tirador Es el jugador que intenta efectuar un tiro
+     * @param objetivo Las coordenadas a donde apunta el ratón del jugador para
+     * disparara en esa dirección
+     */
     private static void realizarDisparo(Entity tirador, Point2D objetivo) {
         double fuerza = tirador.getComponent(AtributosFutbolistaComponent.class).getFuerzaTiroFXGL();
         magnetismo.setTieneElBalon(false);
         Point2D direccion = objetivo.subtract(tirador.getCenter()).normalize();
         balon.getComponent(PhysicsComponent.class).setLinearVelocity(direccion.multiply(fuerza));
     }
-
+    /**
+     * El método que usa el Portero para poner un muro defensivo para su atajada.
+     * @param caster Es el portero
+     */
    private static void desplegarMuroDefensivo(Entity caster) {
         if (!caster.hasComponent(AtributosFutbolistaComponent.class)) return;
         Entidades.Futbolista datos = caster.getComponent(AtributosFutbolistaComponent.class).getDatos();
@@ -696,7 +742,11 @@ public class EscenaMinijuego {
         }
     }
 
-    // MÉTODO PARA QUE EL HOST LEA LAS INTERACCIONES DEL CLIENTE
+   /**
+    * Es el método para que el Host lea las interacciones del Cliente. Traduce 
+    * los comandos de red recibidos del Cliente en fuerza de movimiento y
+    * clics en pantalla
+    */
     private static void procesarComandoEnemigo() {
         if (jugadorEnemigoActivo == null || !jugadorEnemigoActivo.hasComponent(PhysicsComponent.class)) return;
 
@@ -794,8 +844,13 @@ public class EscenaMinijuego {
     }
     
     
-    // RESOLUCIÓN DE LA PARTIDA
-    private static void terminarMinijuego(String mensaje) {
+     /**
+     * Hace una limpieza tras finalizar una jugada de peligro.Desvincula la cámara, 
+     * congela las físicas, apaga la transmisión por Sockets y muestra el mensaje 
+     * de resolución en pantalla. Tras un retraso programado, destruye el mundo 
+     * 2D y devuelve el control al MotorSimulacion matemático.
+     * @param mensaje El texto que se renderizará en el centro de la pantalla (ej. "¡GOLAZO!").
+     */    private static void terminarMinijuego(String mensaje) {
         // Verifica: Si el minijuego ya terminó en este fotograma, ignoramos
         if (minijuegoTerminado) {
             return; 

@@ -1,5 +1,3 @@
-// @author Frank Farias
-
 package MenuJuego;
 
 import Entidades.Equipo;
@@ -20,8 +18,22 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
+/**
+ * Representar visualmente el mercado de fichajes y la alineación. 
+ * Interactúa directamente con los métodos de compras del Jugador para validar 
+ * su presupuesto y su cupo máximo de titulares.
+ * @author FrankFarias 
+ */
 public class MenuPlantilla {
-
+    
+    /**
+     * Distribuye dos contenedores iterables (ScrollPane) para las opciones de 
+     * compra y los jugadores adquiridos. Evalúa que la plantilla final
+     * tenga 11 jugadores y al menos un portero antes de permitir el inicio del 
+     * partido y la sincronización de red
+     * @param dtActual representa al usuario
+     * @return 
+     */
     public static StackPane crearInterfaz(Jugador dtActual) {
         StackPane panelFondo = new StackPane();
         panelFondo.setPrefSize(FXGL.getAppWidth(), FXGL.getAppHeight());
@@ -148,7 +160,20 @@ public class MenuPlantilla {
 
         return panelFondo;
     }
-
+    
+    /**
+     * Método que construye un botón por cada futbolista, inyectando su 
+     * información (nombre, posición, atributos) y adjuntando la lógica que 
+     * procesa su compra/devolución.
+     * @param f
+     * @param dtActual
+     * @param mercado
+     * @param disponibles
+     * @param convocadosBox
+     * @param txtMensaje
+     * @param txtIndicadores
+     * @return 
+     */
     private static Button crearBotonJugador(Futbolista f, Jugador dtActual, MercadoFichajes mercado, VBox disponibles, VBox convocadosBox, Text txtMensaje, Text txtIndicadores) {
         
         // Formateamos el texto en DOS líneas usando \n para que parezca una "tarjeta" pequeña

@@ -1,5 +1,3 @@
-// @author Frank Farias
-
 package MenuJuego;
 
 import com.almasb.fxgl.dsl.FXGL;
@@ -14,6 +12,11 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 
+/**
+ * Pantalla simple destinada a proveer información textual al usuario sobre la 
+ * información técnica de la aplicación.
+ * @author FrankFarias
+ */
 public class MenuAcercaDe {
 
     public static StackPane crearInterfaz() {
@@ -54,11 +57,8 @@ public class MenuAcercaDe {
             "• Arquitectura de red Cliente-Servidor para multijugador: Java Sockets (java.net / java.io).\n\n" +
             
             "=== RESEÑAS DE LOS DESARROLLADORES ===\n" +
-            "• Gabriel Tremaria: Arquitectura general y creación del minijuego 2D con físicas Box2D.\n" +
-            "• Desarrollador 2: Lógica del mercado de fichajes y simulación del motor de juego.\n" +
-            "• Desarrollador 3: Lógica del mercado de fichajes y gestión de entidades.\n" +
-            "• Desarrollador 4: Conectividad por red (Serialización y Sockets).\n" +
-            "• Frank Farias: Diseño e integración de la interfaz gráfica."
+            "• Gabriel Tremaria: Arquitectura general, motor de simulación, conexión por red y minijuego.\n" +
+            "• Frank Farias: Diseño e integración de la interfaz gráfica,  lógica del mercado de fichajes y gestión de entidades."
         );
         informacion.setFont(Font.font("Consolas", 16));
         informacion.setFill(Color.WHITE);

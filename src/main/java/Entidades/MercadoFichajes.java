@@ -1,5 +1,3 @@
-// @author Frank Farias
-
 package Entidades;
 
 import java.io.BufferedReader;
@@ -8,6 +6,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Administra el inventario de jugadores disponibles,
+ * extrayendo la información desde una base de datos local en
+ * formato CSV
+ * @author FrankFarias
+ */
 public class MercadoFichajes {
     
     /// El Banco Comun que guarda todos los jugadores
@@ -17,7 +21,12 @@ public class MercadoFichajes {
         this.bancoComun = new ArrayList<>();
     }
 
-    //Carga los jugadores desde el archivo .csv
+    /**
+     * Lee el archivo mediante BufferedReader, separa los datos por
+     * comas y utiliza un switch para instanciar subclases (ej.
+     * Delantero, Portero) manejando excepciones IOException y NumberFormatException.
+     * @param rutaArchivo es la ruta relativa del CSV
+     */
     public void cargarMercadoDesdeCSV(String rutaArchivo) {
         String linea = "";
         String separador = ",";
@@ -87,6 +96,9 @@ public class MercadoFichajes {
         }
     }
 
+    /**
+     * Retorna la lista de jugadores disponibles.
+     */
     public List<Futbolista> getBancoComun() {
         return bancoComun;
     }

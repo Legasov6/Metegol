@@ -1,5 +1,3 @@
-// @author Frank Farias
-
 package MenuJuego;
 
 import Entidades.Equipo;
@@ -15,10 +13,21 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
+/**
+ * Provee un formulario gráfico para que el jugador ingrese su nombre de 
+ * Director Técnico y seleccione un equipo nacional antes de entrar al mercado.
+ * @author FrankFarias
+ */
 public class MenuEquipos {
 
     private static String equipoSeleccionado = ""; 
-
+    
+    /**
+     * Recopila los datos de un TextField y los eventos de los botones de países. 
+     * Al confirmar, valida que los campos no estén vacíos, instancia el objeto 
+     * de la clase Jugador y lo pasa a la siguiente escena.
+     * @return 
+     */
     public static StackPane crearInterfaz() {
         equipoSeleccionado = ""; 
 

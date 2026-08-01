@@ -1,5 +1,3 @@
-// @author Frank Farias
-
 package MenuJuego;
 
 import Entidades.RegistroCampeon;
@@ -17,8 +15,20 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import java.util.List;
 
+/**
+ * Desplegar el Salón de la Fama mediante una cuadrícula de datos que permite 
+ * consultar a los ganadores previos
+ * @author FrankFarias
+ */
 public class MenuEstadisticas {
 
+    /**
+     * Instancia el objeto nativo TableView de JavaFX, define dinámicamente 
+     * cuatro columnas (Director Técnico, Selección, Marcador y Fecha) utilizando 
+     * propiedades de tipo SimpleStringProperty y lo rellena mapeando la lista 
+     * suministrada por el GestorEstadisticas.
+     * @return 
+     */
     public static StackPane crearInterfaz() {
         StackPane panelFondo = new StackPane();
         panelFondo.setPrefSize(FXGL.getAppWidth(), FXGL.getAppHeight());

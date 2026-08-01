@@ -1,5 +1,3 @@
-// @author Frank Farias
-
 package MenuJuego;
 
 import com.almasb.fxgl.dsl.FXGL;
@@ -13,6 +11,11 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
+/**
+ * Pantalla simple destinada a proveer información textual al usuario sobre los
+ * controles del minijuego.
+ * @author FrankFarias
+ */
 public class MenuComoJugar {
 
     public static StackPane crearInterfaz() {

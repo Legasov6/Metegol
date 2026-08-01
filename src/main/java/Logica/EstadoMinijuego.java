@@ -1,9 +1,14 @@
-// @author Gabriel Tremaria
-
 package Logica;
 
 import java.io.Serializable;
 
+/**
+ * Empaqueta la "verdad universal" procesada por el motor de
+ * colisiones del Host, dictando las posiciones exactas de todas
+ * las entidades para que el Cliente las dibuje idénticas.
+ * Implementa Serializable.
+ * @author Gabriel Tremaria
+ */
 public class EstadoMinijuego implements Serializable {
     // serialVersionUID asegura que Host y Cliente hablen exactamente la misma versión del objeto
     private static final long serialVersionUID = 1L;

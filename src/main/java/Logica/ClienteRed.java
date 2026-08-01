@@ -1,18 +1,28 @@
 package Logica;
 
 import java.io.IOException;
-// @author Gabriel Tremaria
-
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+/**
+ * Representa al participante invitado que se conecta a un 
+ * servidor preexistente proporcionando una dirección de red.
+ * @author GabrielTremaria
+ */
 public class ClienteRed {
 
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
-
+    
+    /**
+     * En un hilo en segundo plano, intenta conectarse al puerto 
+     * 5555 de la dirección IP proporcionada. Si tiene éxito, captura
+     * los flujos de red para comunicarse con el Host
+     * @param ipServidor es la IP proporcionada por el Host
+     * @param onExito 
+     */
     public void conectarAlServidor(String ipServidor, Runnable onExito) {
         new Thread(() -> {
             try {

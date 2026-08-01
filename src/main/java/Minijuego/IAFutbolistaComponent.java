@@ -1,5 +1,3 @@
-// @author Gabriel Tremaria
-
 package Minijuego;
 
 import com.almasb.fxgl.dsl.FXGL;
@@ -8,6 +6,12 @@ import com.almasb.fxgl.entity.component.Component;
 import com.almasb.fxgl.physics.PhysicsComponent;
 import javafx.geometry.Point2D;
 
+/**
+ * Dota de comportamiento autónomo a las entidades aliadas (del equipo atacante) 
+ * que no están siendo controladas por un humano, simulando que "acompañan" la 
+ * jugada ofensiva.
+ * @author GabrielTremaria
+ */
 public class IAFutbolistaComponent extends Component {
 
     private boolean esAtacante;
@@ -18,6 +22,15 @@ public class IAFutbolistaComponent extends Component {
         this.atacaHaciaArriba = atacaHaciaArriba;
     }
 
+    /**
+     * Bucle principal de la Inteligencia Artificial que se ejecuta en cada fotograma.
+     * Evalúa si la entidad actual debe ser controlada por la máquina o si está en posesión 
+     * de un jugador humano.
+     * Si la computadora está actuando como Cliente, este método se aborta (return) 
+     * inmediatamente para cederle el procesamiento absoluto de la IA al Host.
+     *
+     * @param tpf (Time Per Frame) El tiempo transcurrido en segundos desde el último fotograma.
+     */
     @Override
     public void onUpdate(double tpf) {
         // Si somos el Cliente, apagamos el gestor local para que el host sea quien lo maneje

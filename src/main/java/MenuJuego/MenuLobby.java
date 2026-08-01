@@ -1,5 +1,3 @@
-// @author Frank Farias
-
 package MenuJuego;
 
 import Logica.GestorJuego;
@@ -14,8 +12,21 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
+/**
+ * Gestionar la configuración del modo de partida. Permite al usuario bifurcar 
+ * la lógica de la aplicación definiendo si abrirá un servidor en su red local 
+ * o jugará un entorno de pruebas cerrado.
+ * @author FrankFarias
+ */
 public class MenuLobby {
-
+    
+    /**
+     * Renderiza la interfaz de selección. Si el usuario escoge "Crear Sala Online", 
+     * el método instancia al ServidorLocal, actualiza los rótulos a 
+     * "Sala de Espera" y oculta los botones hasta que un Socket cliente 
+     * entrante sea aceptado.
+     * @return 
+     */
     public static StackPane crearInterfaz() {
         StackPane panelFondo = new StackPane();
         panelFondo.setPrefSize(FXGL.getAppWidth(), FXGL.getAppHeight());

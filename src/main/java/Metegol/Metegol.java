@@ -1,6 +1,5 @@
 package Metegol;
 
-// Importa el nuevo paquete del menú que creamos
 import MenuJuego.MenuPrincipal; 
 
 import Entidades.Equipo;
@@ -17,7 +16,6 @@ import javafx.scene.shape.Rectangle;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
-// 1. DESCOMENTAMOS LA HERENCIA. Esto es vital para que FXGL funcione.
 public class Metegol extends GameApplication { 
 
     private Entity pelota;
@@ -27,13 +25,10 @@ public class Metegol extends GameApplication {
        settings.setWidth(1280);
        settings.setHeight(720);
        settings.setTitle("Metegol - Champs 2026");
-       // settings.setFullScreenAllowed(true); 
     }
 
     @Override
     protected void initGame() {
-        // 2. Ajustamos el césped al nuevo tamaño de la ventana (1280x720)
-        // FXGL dibujará esto, pero quedará "oculto" detrás del panel del menú principal
         entityBuilder()
                 .at(0, 0)
                 .view(new Rectangle(1280, 720, Color.web("#2e8b57"))) 
@@ -52,22 +47,14 @@ public class Metegol extends GameApplication {
         });
     }
 
-    // 3. ¡EL PUENTE CON LA INTERFAZ!
-    // Este método se ejecuta al arrancar y pone tu menú por encima de todo
     @Override
     protected void initUI() {
         getGameScene().clearUINodes();
-        // Llamamos a la clase MenuPrincipal que debe estar en el paquete MenuJuego
         var menu = MenuPrincipal.crearInterfaz();
         getGameScene().addUINode(menu);
     }
 
-    public static void main(String[] args) {
-        // 4. LIMPIEZA DEL MAIN
-        // Toda la lógica de consola (System.out.println, comprarFutbolista, etc.) 
-        // debe quedarse en tu clase "PruebaMercado.java". 
-        // El main de la aplicación real solo debe hacer una cosa: arrancar el motor.
-        
+    public static void main(String[] args) {        
         launch(args); 
     }
 }

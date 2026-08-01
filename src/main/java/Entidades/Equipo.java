@@ -1,4 +1,3 @@
-// @author Frank Farias
 
 package Entidades;
 
@@ -7,6 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.Serializable;
 
+/**
+ * Una colección de objetos Futbolista para formar la
+ * selección nacional, proporcionando la sumatoria de
+ * estadísticas según la posición. Implementa Serializable.
+ * @author FrankFarias
+ */
 public class Equipo implements Serializable {
     private static final long serialVersionUID = 1L; //Identificador único para el envio de paquetes para el online
     private String nombrePais;
@@ -26,7 +31,7 @@ public class Equipo implements Serializable {
         
     }
     
-    public void removerFutbolista(Futbolista f){ // POR REVISAR
+    public void removerFutbolista(Futbolista f){ 
         titulares.remove(f);
     }
     

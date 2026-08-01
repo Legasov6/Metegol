@@ -1,5 +1,3 @@
-// @author Gabriel Tremaria
-
 package Logica;
 
 import java.io.IOException;
@@ -8,6 +6,12 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+/**
+ * Representa la entidad del Host en la arquitectura de red. Abre
+ * puertos del sistema para escuchar y aceptar la conexión
+ * TCP/IP entrante del Cliente
+ * @author GabrielTremaria
+ */
 public class ServidorLocal {
 
     private ServerSocket serverSocket;
@@ -15,7 +19,12 @@ public class ServidorLocal {
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
-    // Usamos el puerto 5555
+    /**
+     * Abre el puerto de escucha 5555 en un hilo secundario y se
+     * pausa en accept() hasta recibir a un usuario. Si es exitoso, 
+     * inicializa los flujos de lectura y escritura.
+     * @param onExito 
+     */
     public void iniciarServidor(Runnable onExito) {
         new Thread(() -> {
             try {

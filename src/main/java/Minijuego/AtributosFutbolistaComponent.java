@@ -1,10 +1,15 @@
-// @author Gabriel Tremaria
-
 package Minijuego;
 
 import Entidades.Futbolista;
 import com.almasb.fxgl.entity.component.Component;
 
+/**
+ * Funcionar como un puente (Componente acoplable de FXGL)
+ * que adhiere los datos lógicos de un objeto Futbolista a su
+ * correspondiente entidad gráfica, permitiendo escalar sus
+ * estadísticas matemáticas para el motor físico.
+ * @author GabrielTremaria
+ */
 public class AtributosFutbolistaComponent extends Component {
     private Futbolista datosLogicos;
 

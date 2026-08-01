@@ -1,5 +1,3 @@
-// @author Gabriel Tremaria
-
 package Logica;
 
 import Entidades.Defensor;
@@ -10,8 +8,12 @@ import Entidades.Mediocampista;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+/** Controlador principal del sistema.
+ * Mantiene el estado global de la partida, administra las plantillas de los equipos
+ * y orquesta la comunicación de red entre el Host y el Cliente.
+ * @author Gabriel Tremaria
+ */
 public class GestorJuego {
-
     // Con static aseguramos que haya una sola instancia
     private static GestorJuego instance;
 
@@ -60,7 +62,12 @@ public class GestorJuego {
 
 
     
-    // Lógica de partido local (CPU)
+    /**
+     * Crea un motor de simulación tomando el equipo del usuario y un equipo falso
+     * proporcionado por generarRivalBot(). El propósito no era crear un modo
+     * offline real sino poder probar las funcionalidades del minijuego sin necesidad
+     * de conectarse con otra persona.
+     */
     public void iniciarPartidoContraBot() {
         if (this.equipoLocal == null) {
             System.out.println("Error: No puedes iniciar el partido, el equipo local está vacío.");
@@ -70,7 +77,11 @@ public class GestorJuego {
         generarRivalBot();
         this.motorActivo = new MotorSimulacion(this.equipoLocal, this.equipoRival);
     }
-
+    
+    /**
+     * El método que crea un equipo falso para poder probar el minijuego. Este método
+     * es llamado por iniciarPartidoContraBot()
+     */
     private void generarRivalBot() {
         this.equipoRival = new Entidades.Equipo("Bot FC (CPU)");
         this.equipoRival.agregarFutbolista(new Entidades.Portero("Bot Arquero", "CPU", 2, 1, 2, 4, 0, 0));
@@ -87,7 +98,11 @@ public class GestorJuego {
         System.out.println("[GestorJuego] Equipo rival generado con éxito.");
     }
 
-    // Lógica de partido online
+    /**
+     * Método que maneja la transmisión de datos de las plantillas seleccionadas
+     * por cada usuario
+     * @param alTerminar 
+     */
     public void intercambiarPlantillasOnline(Runnable alTerminar) {
         new Thread(() -> {
             try {

@@ -1,8 +1,12 @@
-// @author Frank Farias
-
 package Entidades;
 import java.io.Serializable;
 
+/**
+ * Esta clase representa a un futbolista genérico en el mercado. Implementa la
+ * interfaz Serializable, necesaria para transmitir sus datos en paquetes a través
+ * de Java Sockets.
+ * @author FrankFarias
+ */
 public class Futbolista implements Serializable{
     
     private static final long serialVersionUID = 1L; //Identificador único para el envio de paquetes para el online

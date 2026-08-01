@@ -1,10 +1,14 @@
-// @author Gabriel Tremaria
-
 package Logica;
 
 import Entidades.Equipo;
 import java.util.Random;
 
+/**
+ * Motor matemático que procesa la lógica del partido de forma agnóstica a la interfaz.
+ * Utiliza una máquina de estados para calcular la posesión, dominio y goles 
+ * basándose en la suma de estadísticas de los futbolistas y probabilidad. 
+ * @author Gabriel Tremaria
+ */
 public class MotorSimulacion {
 
     public enum EstadoPartido {
@@ -26,7 +30,13 @@ public class MotorSimulacion {
     private int golesEquipo1;
     private int golesEquipo2;
     private boolean enMinijuego; // Actúa como el "freno de mano"
-
+    /**
+     * Inicializa el motor matemático del partido estableciendo las estadísticas 
+     * en cero y colocando el estado inicial en NEUTRAL. 
+     *
+     * @param equipo1 El primer equipo que participará en el encuentro (Local).
+     * @param equipo2 El segundo equipo que participará en el encuentro (Visitante).
+     */
     public MotorSimulacion(Equipo equipo1, Equipo equipo2) {
         this.equipo1 = equipo1;
         this.equipo2 = equipo2;
@@ -42,7 +52,14 @@ public class MotorSimulacion {
         this.enMinijuego = false;
     }
 
-    // Bucle principal
+    /**
+     * Avanza el reloj del partido en un minuto y evalúa el estado actual de la posesión.
+     * Dependiendo de si el estado es NEUTRAL, DOMINIO o CONTRAATAQUE, ejecuta 
+     * los cálculos matemáticos correspondientes. Si hay una jugada de peligro, 
+     * el bucle se detiene temporalmente (enMinijuego = true).
+     *
+     * @return Un String con la narración cronológica del evento ocurrido en este minuto.
+     */
     public String simularMinuto() {
         //Cuando llega al minuto 90 acaba el partido
         if (minuto >= 90) {
@@ -74,9 +91,13 @@ public class MotorSimulacion {
         return narracion.toString();
     }
 
-    // Puente con FXGL
-    
-    // Este método lo llama FXGL cuando el balón cruza la línea de meta
+    /**
+     * Actualiza el marcador oficial del partido sumando un tanto.
+     * Este método está diseñado para ser invocado desde la EscenaMinijuego 
+     * cuando el hitbox del balón cruza físicamente la línea de meta.
+     *
+     * @param equipoAnotador El equipo que acaba de marcar el gol en el entorno 2D.
+     */
     public void registrarGol(Equipo equipoAnotador) {
         if (equipoAnotador == equipo1) {
             golesEquipo1++;
@@ -87,7 +108,14 @@ public class MotorSimulacion {
         System.out.println("Marcador actualizado: " + equipo1.getNombrePais() + " " + golesEquipo1 + " - " + golesEquipo2 + " " + equipo2.getNombrePais());
     }
 
-    // El método que FXGL llama cuando termina el minijuego
+    /**
+     * Devuelve el control al motor matemático tras finalizar una secuencia de físicas en Box2D.
+     * Adelanta el reloj según el tiempo gastado en la jugada y recalcula el estado 
+     * del partido (saque de centro si hubo gol, o contraataque si la jugada falló).
+     *
+     * @param minutosConsumidos La cantidad de minutos simulados que duró la jugada 2D.
+     * @param huboGol Indica si la jugada terminó en anotación (true) o si fue fallada/atajada (false).
+     */
     public void finalizarMinijuego(int minutosConsumidos, boolean huboGol) {
         System.out.println("-> Devolviendo el control al motor. El tiempo avanza " + minutosConsumidos + " minutos reales.");
         this.minuto += minutosConsumidos; 
@@ -121,6 +149,14 @@ public class MotorSimulacion {
 
 
     // Cálculos matemáticos
+    /**
+     * Resuelve una disputa por el balón suelto en el mediocampo. Suma los
+     * atributos de pase, velocidad y defensa de ambos equipos para calcular un
+     * pozo de probabilidades y decide quién toma la posesión mediante un dado
+     * virtual.
+     *
+     * @return Un String con la narración de quién ganó la posesión.
+     */
     private String resolverNeutral() {
         StringBuilder sb = new StringBuilder();
         sb.append("Balón dividido en el mediocampo entre ").append(equipo1.getNombrePais()).append(" y ").append(equipo2.getNombrePais()).append("...\n");
@@ -147,7 +183,14 @@ public class MotorSimulacion {
         
         return sb.toString();
     }
-
+    
+    /**
+     * Calcula la probabilidad de éxito de una jugada ofensiva estándar.
+     * Compara el poder de ataque contra el poder de defensa rival. Puede desencadenar 
+     * una transición al minijuego 2D por pase filtrado, o un robo de balón.
+     *
+     * @return Un String con la narración del resultado del ataque.
+     */
     private String resolverDominio() {
         StringBuilder sb = new StringBuilder();
         sb.append(equipoAtacante.getNombrePais()).append(" arma la jugada contra la defensa de ").append(equipoDefensor.getNombrePais()).append("...\n");
@@ -186,7 +229,14 @@ public class MotorSimulacion {
         
         return sb.toString();
     }
-
+    
+    /**
+     * Ejecuta los cálculos para una jugada rápida en transición ofensiva.
+     * El equipo defensor recibe un debuff temporal (penalización) en sus atributos 
+     * por estar descolocado. Si la contra tiene éxito, se abre el minijuego 2D.
+     *
+     * @return Un String detallando si la contra fue letal o si la defensa logró replegarse.
+     */
     private String resolverContraataque() {
         StringBuilder sb = new StringBuilder();
         sb.append("¡").append(equipoAtacante.getNombrePais()).append(" sale a toda velocidad a la contra!\n");

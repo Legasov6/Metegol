@@ -1,5 +1,3 @@
-// @author Gabriel Tremaria
-
 package Minijuego;
 
 import Entidades.Futbolista;
@@ -20,9 +18,18 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 
+/**
+ * Es una fábrica de objetos proporcionada por FXGL. Implementar la interfaz nativa 
+ * EntityFactory del framework. Facilita la creación de todos los objetos en el 
+ * entorno 2D, asignándoles gráficas y formas de colisión (también llamadas hitboxes)
+ * @author GabrielTremaria
+ */
 public class FabricaMinijuego implements EntityFactory {
 
-    //LA PELOTA
+    /**
+     * Crea el objeto pelota con física dinámica, rebotabilidad y densidad.
+     * @param data
+     */
     @Spawns("balon")
     public Entity newBalon(SpawnData data) {
         PhysicsComponent physics = new PhysicsComponent();
@@ -39,7 +46,12 @@ public class FabricaMinijuego implements EntityFactory {
                 .with(new CollidableComponent(true)) // Permite detectar colisiones
                 .build();
     }
-
+    
+    /**
+     * Genera un jugador inyectándole su color de país, texto con su nombre y el
+     * componente de Inteligencia Artificial.
+     * @param data 
+     */
   @Spawns("futbolista")
     public Entity newFutbolista(SpawnData data) {
         // Extraemos los datos lógicos de la clase correcta
@@ -88,7 +100,10 @@ public class FabricaMinijuego implements EntityFactory {
     }
 
 
-    // Colisiones de Tiled
+    /**
+     * Construye la entidad que representa las líneas de "fuera" del mapa .tmx, 
+     * permitiendo delimitar la zona de juego.
+     */
     @Spawns("limite")
     public Entity newLimite(SpawnData data) {
         return FXGL.entityBuilder(data)
@@ -98,6 +113,10 @@ public class FabricaMinijuego implements EntityFactory {
                 .build();
     }
 
+    /**
+     * Construye la entidad que representa la línea de gol.
+     * @param data 
+     */
     @Spawns("porteria")
     public Entity newPorteria(SpawnData data) {
         PhysicsComponent physics = new PhysicsComponent();
@@ -110,7 +129,10 @@ public class FabricaMinijuego implements EntityFactory {
                 .with(new com.almasb.fxgl.entity.components.CollidableComponent(true))
                 .build();
     }
-    
+    /**
+     * Construye la entidad que representa el palo de la portería
+     * @param data
+     */
     @Spawns("palo") //La pelota rebota de este
     public Entity newPalo(SpawnData data) {
         PhysicsComponent physics = new PhysicsComponent();
